@@ -52,9 +52,13 @@ data A;
   
   /* Flag 35+ hours worked as full time */
   if uhrswork >= 35 then fulltime=1;
+  else if uhrswork > 0 then fulltime=0;
+  else fulltime = .n;
 
   /* Flag 50-52 weeks per year as year-round */
   if wkswork2 = 6  then yearround=1;
+  else if wkswork2 > 0 then yearround=0;
+  else yearround = .n;
 
   if 9920 > ind > 0 then do; 
   
@@ -84,6 +88,8 @@ data A;
   cvd19_affctd_incearn = cvd19_affctd_ind * incearn;
   cvd19_affctd_incwage = cvd19_affctd_ind * incwage;
   cvd19_affctd_incbus00 = cvd19_affctd_ind * incbus00;
+  
+  format MWCOG_region fulltime yearround cvd19_affctd_ind dyesno.;
 
 run;
 
@@ -107,18 +113,58 @@ proc summary data=A;
 run;
 
 
-data cvd19_affctd_ind_pop;
+data Covid19.cvd19_affctd_ind_pop;
 
   merge A cvd19_affctd_ind_hh;
   by year serial;
 
 run;
 
-%File_info( data=cvd19_affctd_ind_pop, freqvars=mwcog_region cvd19_affctd_ind )
+%File_info( data=Covid19.cvd19_affctd_ind_pop, freqvars=mwcog_region cvd19_affctd_ind fulltime yearround )
+
+proc freq data=Covid19.cvd19_affctd_ind_pop;
+  tables cvd19_affctd_ind * empstatd * fulltime * yearround /list missing nopercent nocum;
+run;
 
 ** Tables **;
 
-proc tabulate data=cvd19_affctd_ind_pop format=comma16.0 noseps missing;
+%Fmt_ind_2017f()
+
+title3 'Workers in COVID-19 affected industries by industry';
+
+proc tabulate data=Covid19.cvd19_affctd_ind_pop format=comma16.0 noseps missing;
+  where cvd19_affctd_ind = 1;
+  weight perwt;
+  class ind;
+  var total inctot incearn cvd19_affctd_incearn;
+  table 
+
+    /** Rows **/
+    all='Washington metro area (excl WV)' ind=' ',
+
+    /** Columns **/
+    sum='Workers' * total=' ' * f=comma12.0
+
+    sum='Annual income ($ 2016), 2012-16' * 
+    ( inctot='Total income' 
+      incearn='Earnings' 
+      cvd19_affctd_incearn='Earnings from COVID-19 affected industries' )
+
+    pctsum<inctot>='COVID-19 affected earnings as pct. total income' * 
+    cvd19_affctd_incearn=' ' *
+    f=comma12.1
+
+    pctsum<incearn>='COVID-19 affected earnings as pct. total earnings' * 
+    cvd19_affctd_incearn=' ' *
+    f=comma12.1
+  ;
+  format ind ind_2017f.;
+run;
+
+
+title3 'Households with workers in COVID-19 affected industries by state';
+
+proc tabulate data=Covid19.cvd19_affctd_ind_pop format=comma16.0 noseps missing;
   where pernum = 1;
   weight hhwt;
   class statefip;
@@ -126,10 +172,10 @@ proc tabulate data=cvd19_affctd_ind_pop format=comma16.0 noseps missing;
   table 
 
     /** Rows **/
-    all='Washington metro area' statefip=' ',
+    all='Washington metro area (excl WV)' statefip=' ',
 
     /** Columns **/
-    sum='Households' * total=' ' * f=comma12.1
+    sum='Households' * total=' ' * f=comma12.0
 
     sum='Annual household income ($ 2016), 2012-16' * 
     ( inctot_sum='Total income' 
@@ -145,4 +191,6 @@ proc tabulate data=cvd19_affctd_ind_pop format=comma16.0 noseps missing;
     f=comma12.1
   ;
 run;
+
+title2;
 
