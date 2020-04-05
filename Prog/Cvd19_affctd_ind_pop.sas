@@ -120,8 +120,8 @@ data Covid19.cvd19_affctd_ind_pop;
   
   ** Income changes **;
   
-  inc_less_cvd19_affctd = inctot - cvd19_affctd_incearn;
-  inc_less_cvd19_affctd_sum = inctot_sum - cvd19_affctd_incearn_sum;
+  if cvd19_affctd_incearn > 0 then inc_less_cvd19_affctd = inctot - cvd19_affctd_incearn;
+  if cvd19_affctd_incearn_sum > 0 then inc_less_cvd19_affctd_sum = inctot_sum - cvd19_affctd_incearn_sum;
   
   if inctot_sum > 0 then 
     pct_inc_less_cvd19_affctd_sum = 100 * ( 1 - ( inc_less_cvd19_affctd_sum / inctot_sum ) );
@@ -152,7 +152,9 @@ data Covid19.cvd19_affctd_ind_pop;
   
   hud_inc_orig = hud_inc;
   
-  %Hud_inc_all( hhinc=inc_less_cvd19_affctd_sum, hhsize=numprec )
+  if not( missing( inc_less_cvd19_affctd_sum ) ) then do;
+    %Hud_inc_all( hhinc=inc_less_cvd19_affctd_sum, hhsize=numprec )
+  end;
   
   format hud_inc_orig Hud_inc hudinc.;
 
