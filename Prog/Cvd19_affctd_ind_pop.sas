@@ -117,9 +117,49 @@ data Covid19.cvd19_affctd_ind_pop;
 
   merge A cvd19_affctd_ind_hh;
   by year serial;
+  
+  ** Income changes **;
+  
+  inc_less_cvd19_affctd = inctot - cvd19_affctd_incearn;
+  inc_less_cvd19_affctd_sum = inctot_sum - cvd19_affctd_incearn_sum;
+  
+  if inctot_sum > 0 then 
+    pct_inc_less_cvd19_affctd_sum = 100 * ( 1 - ( inc_less_cvd19_affctd_sum / inctot_sum ) );
+  
+  ** Housing cost ratio **;
+  
+  %macro hsg_cost_ratio( inc=, var= );
+  
+    if &inc > 0 then do;
+      if ownershp = 2 then &var = ( rentgrs * 12 ) / inc_tot_sum;
+      else if ownershp = 1 then &var = ( owncost * 12 ) / inc_tot_sum;
+      else if ownership = 0 then &var = .n;
+    end;
+    else do;
+      if ownershp = 2 and rentgrs > 0 then &var = 1;
+      else if ownershp = 1 owncost > 0 then &var = 1;
+      else if ownership = 0 then &var = .n;
+      else &var = 0;
+    end;
+  
+  %mend hsg_cost_ratio;
+  
+  %hsg_cost_ratio( inc=inctot_sum, var=hsg_cost_ratio )
+  
+  %hsg_cost_ratio( inc=inc_less_cvd19_affctd_sum, var=hsg_cost_ratio_cvd19 )
+  
+  ** HUD income catagories **;
+  
+  hud_inc_orig = hud_inc;
+  
+  %Hud_inc_all( hhinc=inc_less_cvd19_affctd_sum, hhsize=numprec )
+  
+  format hud_inc_orig Hud_inc hudinc.;
+
+  rename hud_inc_orig=hud_inc hud_inc=hud_inc_cvd19;
 
   format cvd19_affctd_ind_Sum ;
-
+  
 run;
 
 %File_info( data=Covid19.cvd19_affctd_ind_pop, freqvars=mwcog_region cvd19_affctd_ind fulltime yearround )
