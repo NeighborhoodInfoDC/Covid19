@@ -27,13 +27,13 @@
 				"5159307", "5159308", "5159309", "5110701", "5110702" , "5110703", "5151244", "5151245", "5151246", "5151255" ;
 
 %let keep_vars = 
-  serial pernum perwt hhwt ind occ year statefip countyfips met2013 upuma
+  serial pernum numprec perwt hhwt ind occ year statefip countyfips met2013 upuma
   age sex 
   raced racwht racblk racasian racamind racpacis racother hispand
   educd school schltype
   hud_inc poverty inc: 
   labforce empstatd wkswork2 uhrswork tranwork classwkrd
-  gq plumbing hotwater;
+  ownershp ownershpd rentgrs owncost gq plumbing hotwater;
 
 data A;
 
@@ -117,6 +117,8 @@ data Covid19.cvd19_affctd_ind_pop;
 
   merge A cvd19_affctd_ind_hh;
   by year serial;
+
+  format cvd19_affctd_ind_Sum ;
 
 run;
 
