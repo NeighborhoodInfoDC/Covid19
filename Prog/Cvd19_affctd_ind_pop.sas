@@ -131,14 +131,14 @@ data Covid19.cvd19_affctd_ind_pop;
   %macro hsg_cost_ratio( inc=, var= );
   
     if &inc > 0 then do;
-      if ownershp = 2 then &var = ( rentgrs * 12 ) / inc_tot_sum;
-      else if ownershp = 1 then &var = ( owncost * 12 ) / inc_tot_sum;
-      else if ownership = 0 then &var = .n;
+      if ownershp = 2 then &var = ( rentgrs * 12 ) / &inc;
+      else if ownershp = 1 then &var = ( owncost * 12 ) / &inc;
+      else if ownershp = 0 then &var = .n;
     end;
     else do;
       if ownershp = 2 and rentgrs > 0 then &var = 1;
-      else if ownershp = 1 owncost > 0 then &var = 1;
-      else if ownership = 0 then &var = .n;
+      else if ownershp = 1 and owncost > 0 then &var = 1;
+      else if ownershp = 0 then &var = .n;
       else &var = 0;
     end;
   
@@ -166,6 +166,10 @@ run;
 
 proc freq data=Covid19.cvd19_affctd_ind_pop;
   tables cvd19_affctd_ind * empstatd * fulltime * yearround /list missing nopercent nocum;
+run;
+
+proc univariate data=Covid19.cvd19_affctd_ind_pop;
+  var hsg_cost_ratio hsg_cost_ratio_cvd19;
 run;
 
 ** Tables **;
