@@ -27,7 +27,7 @@
 				"5159307", "5159308", "5159309", "5110701", "5110702" , "5110703", "5151244", "5151245", "5151246", "5151255" ;
 
 %let keep_vars = 
-  serial pernum numprec perwt hhwt ind occ year statefip countyfips met2013 upuma
+  serial pernum numprec perwt hhwt ind occ year statefip countyfip met2013 upuma
   age sex 
   raced racwht racblk racasian racamind racpacis racother hispand
   educd school schltype
