@@ -38,10 +38,10 @@
 data A;
 
   set
-    Ipums.Acs_2012_16_dc (keep=&keep_vars)
-    Ipums.Acs_2012_16_md (keep=&keep_vars)
-    Ipums.Acs_2012_16_va (keep=&keep_vars)
-    Ipums.Acs_2012_16_wv (keep=&keep_vars);
+    Ipums.Acs_2014_18_dc (keep=&keep_vars)
+    Ipums.Acs_2014_18_md (keep=&keep_vars)
+    Ipums.Acs_2014_18_va (keep=&keep_vars)
+    Ipums.Acs_2014_18_wv (keep=&keep_vars);
 
   where met2013 = 47900;
   
@@ -193,7 +193,7 @@ proc tabulate data=Covid19.cvd19_affctd_ind_pop format=comma16.0 noseps missing;
     /** Columns **/
     sum='Workers' * total=' ' * f=comma12.0
 
-    sum='Annual income ($ 2016), 2012-16' * 
+    sum='Annual income ($ 2018), 2012-18' * 
     ( inctot='Total income' 
       incearn='Earnings' 
       cvd19_affctd_incearn='Earnings from COVID-19 affected industries' )
@@ -225,7 +225,7 @@ proc tabulate data=Covid19.cvd19_affctd_ind_pop format=comma16.0 noseps missing;
     /** Columns **/
     sum='Households' * total=' ' * f=comma12.0
 
-    sum='Annual household income ($ 2016), 2012-16' * 
+    sum='Annual household income ($ 2018), 2012-18' * 
     ( inctot_sum='Total income' 
       incearn_sum='Earnings' 
       cvd19_affctd_incearn_sum='Earnings from COVID-19 affected industries' )
