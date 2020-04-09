@@ -87,6 +87,21 @@ proc format;
     0 = 'No'
     .n = 'n/a';
     
+  value OWNERSHP_f (notsorted)
+    1 = "Owned or being bought (loan)"
+    2 = "Rented"
+    0 = "n/a"
+  ;
+    
+  /** HUD Income Categories **/
+  value hudinc (notsorted)
+    1 = 'Extremely low (0-30% AMI)'
+    2 = 'Very low (31-50%)'
+    3 = 'Low (51-80%)'
+    4 = 'Middle (81-120%)'
+    5 = 'High (over 120%)'
+    .n = 'n/a';    
+    
 run;  
 
 ** Examine earnings for outliers **;
@@ -96,8 +111,8 @@ proc univariate data=Covid19.cvd19_affctd_ind_pop;
   var incearn;
 run;
 
-%let CVD19_TOP_1PCT_EARNINGS = 227843;
-%let CVD19_BOT_1PCT_EARNINGS = 247;
+%let CVD19_TOP_1PCT_EARNINGS = 235658;
+%let CVD19_BOT_1PCT_EARNINGS = 262;
 
 ** Worker and household tables **;
 
@@ -109,6 +124,8 @@ ods rtf file="&_dcdata_default_path\Covid19\Prog\Cvd19_affctd_ind_pop_tables.rtf
 
 footnote1 height=9pt "Prepared by Urban-Greater DC (greaterdc.urban.org), &fdate..";
 footnote2 height=9pt j=r '{Page}\~{\field{\*\fldinst{\pard\b\i0\chcbpat8\qc\f1\fs19\cf1{PAGE }\cf0\chcbpat0}}}';
+footnote3 ' ';
+footnote4 '\b DRAFT - NOT FOR CITATION OR RELEASE';
 
 title2 ' ';
 title3 'Workers in COVID-19 affected industries by industry type, MWCOG region';
@@ -128,11 +145,11 @@ proc tabulate data=Covid19.cvd19_affctd_ind_pop format=comma16.0 noseps missing;
     
     mean='Full time workers' * fulltime=' ' * f=percent10.0
 
-    sum='Annual income ($ 2016), 2012-16' * 
+    sum='Annual income ($ 2018), 2014-18' * 
     ( inctot='Total income' 
       cvd19_affctd_incearn='Earnings from COVID-19 affected industries' )
 
-    mean='Annual income per capita ($ 2016), 2012-16' * 
+    mean='Annual income per capita ($ 2018), 2014-18' * 
     ( inctot='Total income' 
       cvd19_affctd_incearn='Earnings from COVID-19 affected industries' )
 
@@ -179,7 +196,7 @@ proc tabulate data=Covid19.cvd19_affctd_ind_pop format=comma16.0 noseps missing;
     sum='Workers' * total=' ' * f=comma10.0
     pctsum='% workers' * total=' ' * f=comma10.1
     
-    mean='Annual income per capita ($ 2016), 2012-16' * 
+    mean='Annual income per capita ($ 2018), 2014-18' * 
     ( inctot='Total income' 
       cvd19_affctd_incearn='Earnings from COVID-19 affected industries' )
 
@@ -204,7 +221,7 @@ proc tabulate data=Covid19.cvd19_affctd_ind_pop format=comma16.0 noseps missing;
     /** Columns **/
     sum='Households' * total=' ' * f=comma12.0
 
-    sum='Annual household income ($ 2016), 2012-16' * 
+    sum='Annual household income ($ 2018), 2014-18' * 
     ( inctot_sum='Total income' 
       incearn_sum='Earnings' 
       cvd19_affctd_incearn_sum='Earnings from COVID-19 affected industries' )
@@ -236,7 +253,7 @@ proc tabulate data=Covid19.cvd19_affctd_ind_pop format=comma16.0 noseps missing;
 
     sum='By HUD income category without COVID-19 affected earnings' * total=' ' * hud_inc_cvd19=' '
     
-    /box = 'By HUD income category, 2012-16'
+    /box = 'By HUD income category, 2014-18'
   ;
 run;
 
@@ -258,7 +275,7 @@ proc tabulate data=Covid19.cvd19_affctd_ind_pop format=comma16.0 noseps missing;
 
     sum='By housing cost burden without COVID-19 affected earnings' * total=' ' * hsg_cost_ratio_cvd19=' '
     
-    /box = 'By housing cost burden, 2012-16'
+    /box = 'By housing cost burden, 2014-18'
   ;
   format hsg_cost_ratio hsg_cost_ratio_cvd19 hsg_cost_ratio.;
 run;
@@ -268,13 +285,15 @@ run;
 ** Graphics **;
 
 footnote2;
+footnote3 ' ';
+footnote4 'DRAFT - NOT FOR CITATION OR RELEASE';
 
 title3 'Workers in COVID-19 affected industries by annual earnings, MWCOG region';
 
 proc sgplot data=Covid19.cvd19_affctd_ind_pop;
   where mwcog_region = 1 and cvd19_affctd_ind = 1 and &CVD19_BOT_1PCT_EARNINGS < incearn < &CVD19_TOP_1PCT_EARNINGS;
   histogram incearn / weight=perwt;
-  label incearn = 'Annual earnings ($ 2016), 2012-16';
+  label incearn = 'Annual earnings ($ 2018), 2014-18';
 run;
 
 
@@ -282,26 +301,28 @@ title3 'Households with workers in COVID-19 affected industries by potential ann
 
 /*** NEED TO TRIM OUTLIERS FROM THIS CHART ***
 proc sgplot data=Covid19.cvd19_affctd_ind_pop;
-  where mwcog_region = 1 and pernum = 1 and incearn_sum > 0;
+  where mwcog_region = 1 and pernum = 1 and incearn_sum > 0 and 0 <= pct_inc_less_cvd19_affctd_sum <= 100;
   histogram cvd19_affctd_incearn_sum / weight=hhwt;
   label 
-    cvd19_affctd_incearn_sum = 'Potential lost annual earnings ($ 2016), 2012-16'
-    pct_inc_less_cvd19_affctd_sum = 'Potential lost annual earnings at pct. total household income, 2012-16';
+    cvd19_affctd_incearn_sum = 'Potential lost annual earnings ($ 2018), 2014-18'
+    pct_inc_less_cvd19_affctd_sum = 'Potential lost annual earnings at pct. total household income, 2014-18';
 run;
 ****/
 
 proc sgplot data=Covid19.cvd19_affctd_ind_pop;
-  where mwcog_region = 1 and pernum = 1 and incearn_sum > 0;
+  where mwcog_region = 1 and pernum = 1 and incearn_sum > 0 and 0 <= pct_inc_less_cvd19_affctd_sum <= 100;
   histogram pct_inc_less_cvd19_affctd_sum / weight=hhwt;
   label 
-    cvd19_affctd_incearn_sum = 'Potential lost annual earnings ($ 2016), 2012-16'
-    pct_inc_less_cvd19_affctd_sum = 'Potential lost annual earnings at pct. total household income, 2012-16';
+    cvd19_affctd_incearn_sum = 'Potential lost annual earnings ($ 2018), 2014-18'
+    pct_inc_less_cvd19_affctd_sum = 'Potential lost annual earnings as pct. total household income, 2014-18';
 run;
 
 
 ** Details **;
 
 footnote2 height=9pt j=r '{Page}\~{\field{\*\fldinst{\pard\b\i0\chcbpat8\qc\f1\fs19\cf1{PAGE }\cf0\chcbpat0}}}';
+footnote3 ' ';
+footnote4 '\b DRAFT - NOT FOR CITATION OR RELEASE';
 
 title2 ' ';
 title3 'Workers in COVID-19 affected industries by industry (detailed), MWCOG region';

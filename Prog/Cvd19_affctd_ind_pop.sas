@@ -193,7 +193,7 @@ proc tabulate data=Covid19.cvd19_affctd_ind_pop format=comma16.0 noseps missing;
     /** Columns **/
     sum='Workers' * total=' ' * f=comma12.0
 
-    sum='Annual income ($ 2018), 2012-18' * 
+    sum='Annual income ($ 2018), 2014-18' * 
     ( inctot='Total income' 
       incearn='Earnings' 
       cvd19_affctd_incearn='Earnings from COVID-19 affected industries' )
@@ -225,7 +225,7 @@ proc tabulate data=Covid19.cvd19_affctd_ind_pop format=comma16.0 noseps missing;
     /** Columns **/
     sum='Households' * total=' ' * f=comma12.0
 
-    sum='Annual household income ($ 2018), 2012-18' * 
+    sum='Annual household income ($ 2018), 2014-18' * 
     ( inctot_sum='Total income' 
       incearn_sum='Earnings' 
       cvd19_affctd_incearn_sum='Earnings from COVID-19 affected industries' )
