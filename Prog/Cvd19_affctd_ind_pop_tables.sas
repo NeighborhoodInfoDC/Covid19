@@ -515,7 +515,6 @@ proc tabulate data=Covid19.cvd19_affctd_ind_pop format=comma16.0 noseps missing;
     all='Total' statefip=' ' * ( all=' ' upuma=' ' ),
 
     /** Columns **/
-    n='N (unwtd)' * total=' ' * f=comma8.0
     sum='Households' * total=' ' * f=comma12.0
 
     sum='Annual household income ($ 2018), 2014-18' * 
