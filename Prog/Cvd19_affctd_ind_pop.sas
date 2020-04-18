@@ -118,6 +118,16 @@ data Covid19.cvd19_affctd_ind_pop;
   merge A cvd19_affctd_ind_hh;
   by year serial;
   
+  ** Race/ethnicity **;
+  
+  if hispand = 0 then do;
+    if raced=100 then race_ethn = 1;  /** White non-Hispanic **/
+    else if raced=200 then race_ethn = 2;  /** Black non-Hispanic **/
+    else if 400 <= raced <= 679 then race_ethn = 4;  /** Asian non-Hispanic **/
+    else race_ethn = 5;  /** All other non-Hispanic **/
+  end;
+  else race_ethn = 3;  /** Hispanic **/
+  
   ** Income changes **;
   
   if cvd19_affctd_incearn > 0 then inc_less_cvd19_affctd = inctot - cvd19_affctd_incearn;
@@ -164,7 +174,7 @@ data Covid19.cvd19_affctd_ind_pop;
   
 run;
 
-%File_info( data=Covid19.cvd19_affctd_ind_pop, freqvars=mwcog_region cvd19_affctd_ind fulltime yearround )
+%File_info( data=Covid19.cvd19_affctd_ind_pop, freqvars=mwcog_region cvd19_affctd_ind race_ethn fulltime yearround )
 
 proc freq data=Covid19.cvd19_affctd_ind_pop;
   tables cvd19_affctd_ind * empstatd * fulltime * yearround /list missing nopercent nocum;
