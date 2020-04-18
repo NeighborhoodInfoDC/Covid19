@@ -23,6 +23,7 @@
 ** Formats **;
 
 %Fmt_ind_2017f()
+%Fmt_occ_2018f()
 
 proc format;
 
@@ -102,6 +103,42 @@ proc format;
     5 = 'High (over 120%)'
     .n = 'n/a';    
     
+  value hudinc_low (notsorted)
+    1-3 = 'At or below low income (0-80% AMI)'
+    4-5 = 'Above low income (81% AMI and higher)'
+    .n = 'n/a';    
+    
+  value $upuma_to_mwcog_jurisd (notsorted) 
+    "5159301", "5159302", "5159303", "5159304", "5159305", "5159306", "5159307", "5159308", "5159309" = "Fairfax Co., Fairfax city, and Falls Church"
+    "2401101", "2401102", "2401103", "2401104", "2401105", "2401106", "2401107" = "Prince George's County"
+    "2401001", "2401002", "2401003", "2401004", "2401005", "2401006", "2401007" = "Montgomery County"
+    "1100101", "1100102", "1100103", "1100104", "1100105" = "District of Columbia"
+    "5151244", "5151245", "5151246" = "Prince William Co., Manassas, and Manassas Park" 
+    "5110701", "5110702" , "5110703" = "Loudoun County"
+    "2400301", "2400302" = "Frederick County"
+    "5101301", "5101302" = "Arlington County"
+    "5151255" = "Alexandria"
+    "2401600" = "Charles County"
+    other = "Not in MWCOG region";
+    
+  value race_ethn (notsorted)
+     1 = "White non-Latino"
+     2 = "Black non-Latino"
+     3 = "Latino"
+     4 = "Asian non-Latino"
+     5 = "All other non-Latino"
+    .n = "Not available";
+    
+  value cvd19_affctd_ind (notsorted) 
+    1 = 'In COVID-19 affected industry'
+    0 = 'Not in COVID-19 affected industry'
+    other = 'n/a';
+    
+  value pct_inc_split (notsorted)
+    40 <- high = 'Above 40% household income'
+    0 - 40 = 'At or below 40% household income'
+    other = 'n/a';
+    
 run;  
 
 ** Examine earnings for outliers **;
@@ -114,13 +151,24 @@ run;
 %let CVD19_TOP_1PCT_EARNINGS = 235658;
 %let CVD19_BOT_1PCT_EARNINGS = 262;
 
+** Find median pct. of affected household earnings **;
+
+proc means data=Covid19.cvd19_affctd_ind_pop n median mean min max;
+  where mwcog_region = 1 and cvd19_affctd_ind = 1 and &CVD19_BOT_1PCT_EARNINGS < incearn < &CVD19_TOP_1PCT_EARNINGS;
+  weight perwt;
+  var pct_inc_less_cvd19_affctd_sum;
+run;
+
+
 ** Worker and household tables **;
 
 options nodate nonumber;
+options orientation=portrait;
 
 %fdate()
 
 ods rtf file="&_dcdata_default_path\Covid19\Prog\Cvd19_affctd_ind_pop_tables.rtf" style=Styles.Rtf_arial_9pt;
+ods listing close;
 
 footnote1 height=9pt "Prepared by Urban-Greater DC (greaterdc.urban.org), &fdate..";
 footnote2 height=9pt j=r '{Page}\~{\field{\*\fldinst{\pard\b\i0\chcbpat8\qc\f1\fs19\cf1{PAGE }\cf0\chcbpat0}}}';
@@ -128,7 +176,70 @@ footnote3 ' ';
 footnote4 '\b DRAFT - NOT FOR CITATION OR RELEASE';
 
 title2 ' ';
-title3 'Workers in COVID-19 affected industries by industry type, MWCOG region';
+
+
+**** Worker tables ****;
+
+title3 'Workers and earnings by COVID-19 affected industry status, MWCOG region';
+
+proc tabulate data=Covid19.cvd19_affctd_ind_pop format=comma16.0 noseps missing;
+  where mwcog_region = 1 and &CVD19_BOT_1PCT_EARNINGS < incearn < &CVD19_TOP_1PCT_EARNINGS;
+  weight perwt;
+  class cvd19_affctd_ind /order=data preloadfmt;
+  var total inctot incearn cvd19_affctd_incearn fulltime;
+  table 
+
+    /** Rows **/
+    all='Total' cvd19_affctd_ind=' ',
+
+    /** Columns **/
+    n='N (unwtd)' * total=' ' * f=comma8.0
+    sum='Workers' * total=' ' * f=comma10.0
+    
+    mean='Full time workers' * fulltime=' ' * f=percent10.0
+
+    sum='Annual income ($ 2018), 2014-18' * 
+    ( inctot='Total income' 
+      incearn='Total earnings'
+      cvd19_affctd_incearn='Earnings from COVID-19 affected industries' )
+
+    pctsum<inctot>='COVID-19 affected earnings as pct. total income' * 
+    cvd19_affctd_incearn=' ' *
+    f=comma12.1
+
+    pctsum<incearn>='COVID-19 affected earnings as pct. total earnings' * 
+    cvd19_affctd_incearn=' ' *
+    f=comma12.1
+  ;
+  table 
+
+    /** Rows **/
+    all='Total' cvd19_affctd_ind=' ',
+
+    /** Columns **/
+    n='N (unwtd)' * total=' ' * f=comma8.0
+    sum='Workers' * total=' ' * f=comma10.0
+    
+    mean='Full time workers' * fulltime=' ' * f=percent10.0
+
+    mean='Annual income per capita ($ 2018), 2014-18' * 
+    ( inctot='Total income' 
+      incearn='Total earnings'
+      cvd19_affctd_incearn='Earnings from COVID-19 affected industries' )
+
+    pctsum<inctot>='COVID-19 affected earnings as pct. total income' * 
+    cvd19_affctd_incearn=' ' *
+    f=comma12.1
+
+    pctsum<incearn>='COVID-19 affected earnings as pct. total earnings' * 
+    cvd19_affctd_incearn=' ' *
+    f=comma12.1
+  ;
+  format cvd19_affctd_ind cvd19_affctd_ind.;
+run;
+
+
+title3 'Workers and earnings in COVID-19 affected industries by industry type, MWCOG region';
 
 proc tabulate data=Covid19.cvd19_affctd_ind_pop format=comma16.0 noseps missing;
   where mwcog_region = 1 and cvd19_affctd_ind = 1 and &CVD19_BOT_1PCT_EARNINGS < incearn < &CVD19_TOP_1PCT_EARNINGS;
@@ -141,6 +252,7 @@ proc tabulate data=Covid19.cvd19_affctd_ind_pop format=comma16.0 noseps missing;
     all='Total' ind='\line \i By industry type',
 
     /** Columns **/
+    n='N (unwtd)' * total=' ' * f=comma8.0
     sum='Workers' * total=' ' * f=comma10.0
     
     mean='Full time workers' * fulltime=' ' * f=percent10.0
@@ -162,14 +274,14 @@ proc tabulate data=Covid19.cvd19_affctd_ind_pop format=comma16.0 noseps missing;
 run;
 
 
-title3 'Characteristics of workers in COVID-19 affected industries, MWCOG region';
+title3 'Characteristics of workers in COVID-19 affected industries with annual earnings, MWCOG region';
 
 proc tabulate data=Covid19.cvd19_affctd_ind_pop format=comma16.0 noseps missing;
   where mwcog_region = 1 and cvd19_affctd_ind = 1 and &CVD19_BOT_1PCT_EARNINGS < incearn < &CVD19_TOP_1PCT_EARNINGS;
   weight perwt;
   class ind /order=data preloadfmt;
   class 
-    statefip age sex raced hispand poverty hud_inc classwkrd fulltime yearround educd 
+    statefip upuma age sex race_ethn poverty hud_inc classwkrd fulltime yearround educd 
     ownershp hsg_cost_ratio
     /order=data preloadfmt; 
   var total inctot incearn cvd19_affctd_incearn;
@@ -178,10 +290,10 @@ proc tabulate data=Covid19.cvd19_affctd_ind_pop format=comma16.0 noseps missing;
     /** Rows **/
     all='Total' 
     statefip='\line \i By state'
+    upuma='\line \i By jurisdiction'
     age='\line \i By age'
     sex='\line \i By sex'
-    raced='\line \i By race'
-    hispand='\line \i By Hispanic status'
+    race_ethn='\line \i By race/ethnicity'
     poverty='\line \i By family poverty status (pre-COVID-19)'
     hud_inc='\line \i By HUD income category (pre-COVID-19)'
     classwkrd='\line \i By class of worker'
@@ -193,6 +305,7 @@ proc tabulate data=Covid19.cvd19_affctd_ind_pop format=comma16.0 noseps missing;
     ,
 
     /** Columns **/
+    n='N (unwtd)' * total=' ' * f=comma8.0
     sum='Workers' * total=' ' * f=comma10.0
     pctsum='% workers' * total=' ' * f=comma10.1
     
@@ -202,23 +315,162 @@ proc tabulate data=Covid19.cvd19_affctd_ind_pop format=comma16.0 noseps missing;
 
   ;
   format ind ind_sum. age age_sum. raced race_sum. hispand hispan_sum. poverty poverty_sum. educd educ_sum.
-         hsg_cost_ratio hsg_cost_ratio.
+         hsg_cost_ratio hsg_cost_ratio. upuma $upuma_to_mwcog_jurisd. race_ethn race_ethn.
          fulltime yearround yesnona.;
 run;
 
-title3 'Households with workers in COVID-19 affected industries by state, MWCOG region';
+
+title3 'Characteristics of workers by COVID-19 affected industry status, MWCOG region';
+
+proc tabulate data=Covid19.cvd19_affctd_ind_pop format=comma16.0 noseps missing;
+  where mwcog_region = 1 and &CVD19_BOT_1PCT_EARNINGS < incearn < &CVD19_TOP_1PCT_EARNINGS;
+  weight perwt;
+  class ind cvd19_affctd_ind /order=data preloadfmt;
+  class 
+    statefip upuma age sex race_ethn poverty hud_inc classwkrd fulltime yearround educd 
+    ownershp hsg_cost_ratio
+    /order=data preloadfmt; 
+  var total inctot incearn cvd19_affctd_incearn;
+  table 
+
+    /** Rows **/
+    all='Total' 
+    statefip='\line \i By state'
+    upuma='\line \i By jurisdiction'
+    age='\line \i By age'
+    sex='\line \i By sex'
+    race_ethn='\line \i By race/ethnicity'
+    poverty='\line \i By family poverty status (pre-COVID-19)'
+    hud_inc='\line \i By HUD income category (pre-COVID-19)'
+    classwkrd='\line \i By class of worker'
+    fulltime='\line \i By full time worker status'
+    yearround='\line \i By year-round worker status'
+    educd='\line \i By educational attainment'
+    ownershp='\line \i By housing tenure'
+    hsg_cost_ratio='\line \i By housing cost burden (pre-COVID-19)'
+    ,
+
+    /** Columns **/
+    cvd19_affctd_ind=' ' * (
+      n='N (unwtd)' * total=' ' * f=comma8.0
+      sum='Workers' * total=' ' * f=comma10.0
+      colpctsum='% workers' * total=' ' * f=comma10.1
+    )
+    
+  ;
+  format ind ind_sum. age age_sum. raced race_sum. hispand hispan_sum. poverty poverty_sum. educd educ_sum.
+         hsg_cost_ratio hsg_cost_ratio. upuma $upuma_to_mwcog_jurisd. race_ethn race_ethn.
+         cvd19_affctd_ind cvd19_affctd_ind.  
+         fulltime yearround yesnona.;
+run;
+
+
+title3 'Characteristics of workers in COVID-19 affected industries by HUD household income category, MWCOG region';
+
+proc tabulate data=Covid19.cvd19_affctd_ind_pop format=comma16.0 noseps missing;
+  where mwcog_region = 1 and cvd19_affctd_ind = 1 and &CVD19_BOT_1PCT_EARNINGS < incearn < &CVD19_TOP_1PCT_EARNINGS
+        and hud_inc >= 1;
+  weight perwt;
+  class ind /order=data preloadfmt;
+  class 
+    statefip upuma age sex race_ethn poverty hud_inc classwkrd fulltime yearround educd 
+    ownershp hsg_cost_ratio
+    /order=data preloadfmt; 
+  var total inctot incearn cvd19_affctd_incearn;
+  table 
+
+    /** Rows **/
+    all='Total' 
+    statefip='\line \i By state'
+    upuma='\line \i By jurisdiction'
+    age='\line \i By age'
+    sex='\line \i By sex'
+    race_ethn='\line \i By race/ethnicity'
+    poverty='\line \i By family poverty status (pre-COVID-19)'
+    classwkrd='\line \i By class of worker'
+    fulltime='\line \i By full time worker status'
+    yearround='\line \i By year-round worker status'
+    educd='\line \i By educational attainment'
+    ownershp='\line \i By housing tenure'
+    hsg_cost_ratio='\line \i By housing cost burden (pre-COVID-19)'
+    ,
+
+    /** Columns **/
+    hud_inc=' ' * (
+      n='N (unwtd)' * total=' ' * f=comma8.0
+      sum='Workers' * total=' ' * f=comma10.0
+      colpctsum='% workers' * total=' ' * f=comma10.1
+    )
+    
+  ;
+  format ind ind_sum. age age_sum. raced race_sum. hispand hispan_sum. poverty poverty_sum. educd educ_sum.
+         hsg_cost_ratio hsg_cost_ratio. upuma $upuma_to_mwcog_jurisd. race_ethn race_ethn.
+         hud_inc hudinc_low.  
+         fulltime yearround yesnona.;
+run;
+
+
+title3 'Characteristics of workers in COVID-19 affected industries by affected earnings share of household income, MWCOG region';
+
+proc tabulate data=Covid19.cvd19_affctd_ind_pop format=comma16.0 noseps missing;
+  where mwcog_region = 1 and cvd19_affctd_ind = 1 and &CVD19_BOT_1PCT_EARNINGS < incearn < &CVD19_TOP_1PCT_EARNINGS;
+  weight perwt;
+  class ind pct_inc_less_cvd19_affctd_sum /order=data preloadfmt;
+  class 
+    statefip upuma age sex race_ethn poverty hud_inc classwkrd fulltime yearround educd 
+    ownershp hsg_cost_ratio
+    /order=data preloadfmt; 
+  var total inctot incearn cvd19_affctd_incearn;
+  table 
+
+    /** Rows **/
+    all='Total' 
+    statefip='\line \i By state'
+    upuma='\line \i By jurisdiction'
+    age='\line \i By age'
+    sex='\line \i By sex'
+    race_ethn='\line \i By race/ethnicity'
+    poverty='\line \i By family poverty status (pre-COVID-19)'
+    classwkrd='\line \i By class of worker'
+    fulltime='\line \i By full time worker status'
+    yearround='\line \i By year-round worker status'
+    educd='\line \i By educational attainment'
+    ownershp='\line \i By housing tenure'
+    hsg_cost_ratio='\line \i By housing cost burden (pre-COVID-19)'
+    ,
+
+    /** Columns **/
+    pct_inc_less_cvd19_affctd_sum=' ' * (
+      n='N (unwtd)' * total=' ' * f=comma8.0
+      sum='Workers' * total=' ' * f=comma10.0
+      colpctsum='% workers' * total=' ' * f=comma10.1
+    )
+    
+  ;
+  format ind ind_sum. age age_sum. raced race_sum. hispand hispan_sum. poverty poverty_sum. educd educ_sum.
+         hsg_cost_ratio hsg_cost_ratio. upuma $upuma_to_mwcog_jurisd. race_ethn race_ethn.
+         pct_inc_less_cvd19_affctd_sum pct_inc_split.  
+         fulltime yearround yesnona.;
+run;
+
+
+**** Household tables ****;
+
+title3 'Households with workers in COVID-19 affected industries by state and jurisdiction, MWCOG region';
 
 proc tabulate data=Covid19.cvd19_affctd_ind_pop format=comma16.0 noseps missing;
   where mwcog_region = 1 and pernum = 1 and incearn_sum > 0;
   weight hhwt;
   class statefip;
+  class upuma / preloadfmt order=data;
   var total inctot_sum incearn_sum cvd19_affctd_incearn_sum;
   table 
 
     /** Rows **/
-    all='Total' statefip=' ',
+    all='Total' statefip=' ' * ( all=' ' upuma=' ' ),
 
     /** Columns **/
+    n='N (unwtd)' * total=' ' * f=comma8.0
     sum='Households' * total=' ' * f=comma12.0
 
     sum='Annual household income ($ 2018), 2014-18' * 
@@ -234,6 +486,7 @@ proc tabulate data=Covid19.cvd19_affctd_ind_pop format=comma16.0 noseps missing;
     cvd19_affctd_incearn_sum=' ' *
     f=comma12.1
   ;
+  format upuma $upuma_to_mwcog_jurisd.;
 run;
 
 title3 'Households with workers in COVID-19 affected industries by potential change in HUD income category, MWCOG region';
@@ -241,19 +494,23 @@ title3 'Households with workers in COVID-19 affected industries by potential cha
 proc tabulate data=Covid19.cvd19_affctd_ind_pop format=comma16.0 noseps missing;
   where mwcog_region = 1 and pernum = 1 and incearn_sum > 0 and not( missing( hud_inc ) );
   weight hhwt;
-  class hud_inc hud_inc_cvd19;
+  class statefip hud_inc hud_inc_cvd19;
   var total;
   table 
+  
+    /** Pages **/
+    all='MWCOG region' statefip=' ',
 
     /** Rows **/
     all='Total' hud_inc=' ',
 
     /** Columns **/
+    n='N (unwtd)' * total=' ' * f=comma8.0
     sum='Households' * total=' ' * f=comma12.0
 
     sum='By HUD income category without COVID-19 affected earnings' * total=' ' * hud_inc_cvd19=' '
     
-    /box = 'By HUD income category, 2014-18'
+    /box = 'By HUD income category, 2014-18' condense
   ;
 run;
 
@@ -263,26 +520,29 @@ title3 'Households with workers in COVID-19 affected industries by potential cha
 proc tabulate data=Covid19.cvd19_affctd_ind_pop format=comma16.0 noseps missing;
   where mwcog_region = 1 and pernum = 1 and incearn_sum > 0 and not( missing( hud_inc ) );
   weight hhwt;
-  class hsg_cost_ratio hsg_cost_ratio_cvd19 / order=data preloadfmt;
+  class statefip hsg_cost_ratio hsg_cost_ratio_cvd19 / order=data preloadfmt;
   var total;
   table 
+
+    /** Pages **/
+    all='MWCOG region' statefip=' ',
 
     /** Rows **/
     all='Total' hsg_cost_ratio=' ',
 
     /** Columns **/
+    n='N (unwtd)' * total=' ' * f=comma8.0
     sum='Households' * total=' ' * f=comma12.0
 
     sum='By housing cost burden without COVID-19 affected earnings' * total=' ' * hsg_cost_ratio_cvd19=' '
     
-    /box = 'By housing cost burden, 2014-18'
+    /box = 'By housing cost burden, 2014-18' condense
   ;
   format hsg_cost_ratio hsg_cost_ratio_cvd19 hsg_cost_ratio.;
 run;
 
 
-
-** Graphics **;
+**** Graphics ****;
 
 footnote2;
 footnote3 ' ';
@@ -318,7 +578,7 @@ proc sgplot data=Covid19.cvd19_affctd_ind_pop;
 run;
 
 
-** Details **;
+**** Details ****;
 
 footnote2 height=9pt j=r '{Page}\~{\field{\*\fldinst{\pard\b\i0\chcbpat8\qc\f1\fs19\cf1{PAGE }\cf0\chcbpat0}}}';
 footnote3 ' ';
@@ -338,14 +598,37 @@ proc tabulate data=Covid19.cvd19_affctd_ind_pop format=comma16.0 noseps missing;
     all='Total' ind='\line \i By industry',
 
     /** Columns **/
+    n='N (unwtd)' * total=' ' * f=comma8.0
     ( sum='Workers' * f=comma10.0 pctsum='% workers' * f=comma10.1 ) * total=' ' 
     
   ;
-  format ind ind_2017f.;
+  format ind ind_2017f. occ occ_2018f.;
+run;
+
+
+title3 'Workers in COVID-19 affected industries by occupation (detailed), MWCOG region';
+
+proc tabulate data=Covid19.cvd19_affctd_ind_pop format=comma16.0 noseps missing;
+  where mwcog_region = 1 and cvd19_affctd_ind = 1 and &CVD19_BOT_1PCT_EARNINGS < incearn < &CVD19_TOP_1PCT_EARNINGS;
+  weight perwt;
+  class occ /order=freq;
+  var total inctot incearn cvd19_affctd_incearn fulltime;
+  table 
+
+    /** Rows **/
+    all='Total' occ='\line \i By occupation',
+
+    /** Columns **/
+    n='N (unwtd)' * total=' ' * f=comma8.0
+    ( sum='Workers' * f=comma10.0 pctsum='% workers' * f=comma10.1 ) * total=' ' 
+    
+  ;
+  format ind ind_2017f. occ occ_2018f.;
 run;
 
 
 ods rtf close;
+ods listing;
 
 title2;
 footnote1;
