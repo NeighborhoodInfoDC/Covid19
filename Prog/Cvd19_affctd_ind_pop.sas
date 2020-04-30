@@ -64,18 +64,11 @@ data A;
   
     select;
     
-      when ( year in ( 2018 ) )
+      when ( year in ( 2008:2018 ) ) do;
         if ind in ( 370:490, 6070:6090, 6180:6190, 6280, 7670, 8560:8590, 8660:8690 ) then cvd19_affctd_ind = 1;
         else cvd19_affctd_ind = 0;
+      end;
     
-      when ( year in ( 2013:2017 ) )
-        if ind in ( 370:490, 6070:6090, 6180:6190, 6280, 7670, 8560:8590, 8660:8690 ) then cvd19_affctd_ind = 1;
-        else cvd19_affctd_ind = 0;
-        
-      when ( year in ( 2008:2012 ) )
-        if ind in ( 370:490, 6070:6090, 6180:6190, 6280, 7670, 8560:8590, 8660:8690 ) then cvd19_affctd_ind = 1;
-        else cvd19_affctd_ind = 0;
-        
       otherwise do;
         %err_put( msg="ACS industry not coded for this year. " year= )
       end;
@@ -113,7 +106,7 @@ proc summary data=A;
 run;
 
 
-data Covid19.cvd19_affctd_ind_pop;
+data Cvd19_affctd_ind_pop;
 
   merge A cvd19_affctd_ind_hh;
   by year serial;
@@ -172,15 +165,49 @@ data Covid19.cvd19_affctd_ind_pop;
 
   format cvd19_affctd_ind_Sum ;
   
+  label
+    MWCOG_region = "In MWCOG region"
+    cvd19_affctd_incbus00 = "Personal business and farm income from COVID-affected industries"
+    cvd19_affctd_incbus00_Sum = "HH business and farm income from COVID-affected industries"
+    cvd19_affctd_incearn = "Total personal earned income from COVID-affected industries" 
+    cvd19_affctd_incearn_Sum = "Total HH earned income from COVID-affected industries"
+    cvd19_affctd_incwage = "Personal wage and salary income from COVID-affected industries"
+    cvd19_affctd_incwage_Sum = "HH wage and salary income from COVID-affected industries"
+    cvd19_affctd_ind = "Worker in COVID-affected industry"
+    cvd19_affctd_ind_Sum = "Total HH workers in COVID-affected industries"
+    fulltime = "Full time worker (35+ hours per week)"
+    hsg_cost_ratio = "Ratio of housing costs to HH income, original"
+    hsg_cost_ratio_cvd19 = "Ratio of housing costs to HH income, less COVID-related earnings"
+    hud_inc_orig = "HUD HH income category, original"
+    hud_inc = "HUD HH income category, less COVID-related earnings"
+    inc_less_cvd19_affctd = "Total personal income, less COVID-related earnings"
+    inc_less_cvd19_affctd_sum = "Total HH income, less COVID-related earnings"
+    pct_inc_less_cvd19_affctd_sum = "Percentage reduction in total HH income from loss of COVID-related earnings"
+    race_ethn = "Race/ethnicity"
+    total = "Total person/household count"
+    yearround = "Year round worker (50-52 weeks per year)";
+
 run;
 
-%File_info( data=Covid19.cvd19_affctd_ind_pop, freqvars=mwcog_region cvd19_affctd_ind race_ethn fulltime yearround )
 
-proc freq data=Covid19.cvd19_affctd_ind_pop;
+%Finalize_data_set( 
+  data=Cvd19_affctd_ind_pop,
+  out=Cvd19_affctd_ind_pop,
+  outlib=Covid19,
+  label="Workers and households in COVID-19-affected industries, ACS, 2014-18, Washington metro (partial)",
+  sortby=serial pernum,
+  revisions=%str(New file.),
+  freqvars=mwcog_region cvd19_affctd_ind race_ethn fulltime yearround
+)
+
+
+** Diagnostic output **;
+
+proc freq data=Cvd19_affctd_ind_pop;
   tables cvd19_affctd_ind * empstatd * fulltime * yearround /list missing nopercent nocum;
 run;
 
-proc univariate data=Covid19.cvd19_affctd_ind_pop;
+proc univariate data=Cvd19_affctd_ind_pop;
   var hsg_cost_ratio hsg_cost_ratio_cvd19;
 run;
 
@@ -190,7 +217,7 @@ run;
 
 title3 'Workers in COVID-19 affected industries by industry';
 
-proc tabulate data=Covid19.cvd19_affctd_ind_pop format=comma16.0 noseps missing;
+proc tabulate data=Cvd19_affctd_ind_pop format=comma16.0 noseps missing;
   where cvd19_affctd_ind = 1;
   weight perwt;
   class ind;
@@ -222,7 +249,7 @@ run;
 
 title3 'Households with workers in COVID-19 affected industries by state';
 
-proc tabulate data=Covid19.cvd19_affctd_ind_pop format=comma16.0 noseps missing;
+proc tabulate data=Cvd19_affctd_ind_pop format=comma16.0 noseps missing;
   where pernum = 1;
   weight hhwt;
   class statefip;

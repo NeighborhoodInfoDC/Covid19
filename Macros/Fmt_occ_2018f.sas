@@ -553,7 +553,7 @@
       9810 = "First-line enlisted military supervisors"
       9825 = "Military enlisted tactical operations and air/weapons specialists and crew members"
       9830 = "Military, rank not specified"
-      9920 = "Unemployed, with no work experience in the last 5 years or earlier or never worked"
+      9920 = "Unemployed, with no work experience in the last 5 years or earlier or never worked";
 
   run;
 

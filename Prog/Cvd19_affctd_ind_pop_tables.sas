@@ -10,6 +10,9 @@
  
  Description:  Create tables on COVID-19 affected workers and
  households. 
+ 
+ RTF tables use Styles.Rtf_arial_9pt ODS style, which must first be created 
+ by batch submitting L:\Libraries\General\Prog\Style_rtf_arial_9pt.sas. 
 
  Modifications:
 **************************************************************************/
@@ -19,6 +22,15 @@
 ** Define libraries **;
 %DCData_lib( Covid19 )
 %DCData_lib( Ipums )
+
+
+** Global macro variables **;
+
+%global ACS_YEAR DOLLAR_YEAR CVD19_BOT_1PCT_EARNINGS CVD19_TOP_1PCT_EARNINGS;
+
+%let ACS_YEAR = 2014-18;
+%let DOLLAR_YEAR = 2018;
+
 
 ** Formats **;
 
@@ -143,13 +155,18 @@ run;
 
 ** Examine earnings for outliers **;
 
-proc univariate data=Covid19.cvd19_affctd_ind_pop;
+proc univariate data=Covid19.cvd19_affctd_ind_pop noprint;
   where mwcog_region = 1 and cvd19_affctd_ind = 1 and incearn > 0;
   var incearn;
+  output out=incearn_ptiles p1=incearn_p1 p99=incearn_p99;
 run;
 
-%let CVD19_TOP_1PCT_EARNINGS = 235658;
-%let CVD19_BOT_1PCT_EARNINGS = 262;
+proc sql noprint;
+  select incearn_p1, incearn_p99 into :CVD19_BOT_1PCT_EARNINGS, :CVD19_TOP_1PCT_EARNINGS from incearn_ptiles;
+  quit;
+
+%put CVD19_BOT_1PCT_EARNINGS=&CVD19_BOT_1PCT_EARNINGS; 
+%put CVD19_TOP_1PCT_EARNINGS=&CVD19_TOP_1PCT_EARNINGS; 
 
 ** Find median pct. of affected household earnings **;
 
@@ -198,7 +215,7 @@ proc tabulate data=Covid19.cvd19_affctd_ind_pop format=comma16.0 noseps missing;
     
     mean='Full time workers' * fulltime=' ' * f=percent10.0
 
-    sum='Annual income ($ 2018), 2014-18' * 
+    sum="Annual income ($ &DOLLAR_YEAR.), &ACS_YEAR." * 
     ( inctot='Total income' 
       incearn='Total earnings'
       cvd19_affctd_incearn='Earnings from COVID-19 affected industries' )
@@ -222,7 +239,7 @@ proc tabulate data=Covid19.cvd19_affctd_ind_pop format=comma16.0 noseps missing;
     
     mean='Full time workers' * fulltime=' ' * f=percent10.0
 
-    mean='Annual income per capita ($ 2018), 2014-18' * 
+    mean="Annual income per capita ($ &DOLLAR_YEAR.), &ACS_YEAR." * 
     ( inctot='Total income' 
       incearn='Total earnings'
       cvd19_affctd_incearn='Earnings from COVID-19 affected industries' )
@@ -257,11 +274,11 @@ proc tabulate data=Covid19.cvd19_affctd_ind_pop format=comma16.0 noseps missing;
     
     mean='Full time workers' * fulltime=' ' * f=percent10.0
 
-    sum='Annual income ($ 2018), 2014-18' * 
+    sum="Annual income ($ &DOLLAR_YEAR.), &ACS_YEAR." * 
     ( inctot='Total income' 
       cvd19_affctd_incearn='Earnings from COVID-19 affected industries' )
 
-    mean='Annual income per capita ($ 2018), 2014-18' * 
+    mean="Annual income per capita ($ &DOLLAR_YEAR.), &ACS_YEAR." * 
     ( inctot='Total income' 
       cvd19_affctd_incearn='Earnings from COVID-19 affected industries' )
 
@@ -309,7 +326,7 @@ proc tabulate data=Covid19.cvd19_affctd_ind_pop format=comma16.0 noseps missing;
     sum='Workers' * total=' ' * f=comma10.0
     pctsum='% workers' * total=' ' * f=comma10.1
     
-    mean='Annual income per capita ($ 2018), 2014-18' * 
+    mean="Annual income per capita ($ &DOLLAR_YEAR.), &ACS_YEAR." * 
     ( inctot='Total income' 
       cvd19_affctd_incearn='Earnings from COVID-19 affected industries' )
 
@@ -517,7 +534,7 @@ proc tabulate data=Covid19.cvd19_affctd_ind_pop format=comma16.0 noseps missing;
     /** Columns **/
     sum='Households' * total=' ' * f=comma12.0
 
-    sum='Annual household income ($ 2018), 2014-18' * 
+    sum="Annual household income ($ &DOLLAR_YEAR.), &ACS_YEAR." * 
     ( inctot_sum='Total income' 
       incearn_sum='Earnings' 
       cvd19_affctd_incearn_sum='Earnings from COVID-19 affected industries' )
@@ -554,7 +571,7 @@ proc tabulate data=Covid19.cvd19_affctd_ind_pop format=comma16.0 noseps missing;
 
     sum='By HUD income category without COVID-19 affected earnings' * total=' ' * hud_inc_cvd19=' '
     
-    /box = 'By HUD income category, 2014-18' condense
+    /box = "By HUD income category, &ACS_YEAR." condense
   ;
 run;
 
@@ -580,7 +597,7 @@ proc tabulate data=Covid19.cvd19_affctd_ind_pop format=comma16.0 noseps missing;
 
     sum='By housing cost burden without COVID-19 affected earnings' * total=' ' * hsg_cost_ratio_cvd19=' '
     
-    /box = 'By housing cost burden, 2014-18' condense
+    /box = "By housing cost burden, &ACS_YEAR." condense
   ;
   format hsg_cost_ratio hsg_cost_ratio_cvd19 hsg_cost_ratio.;
 run;
@@ -597,28 +614,18 @@ title3 'Workers in COVID-19 affected industries by annual earnings, MWCOG region
 proc sgplot data=Covid19.cvd19_affctd_ind_pop;
   where mwcog_region = 1 and cvd19_affctd_ind = 1 and &CVD19_BOT_1PCT_EARNINGS < incearn < &CVD19_TOP_1PCT_EARNINGS;
   histogram incearn / weight=perwt;
-  label incearn = 'Annual earnings ($ 2018), 2014-18';
+  label incearn = "Annual earnings ($ &DOLLAR_YEAR.), &ACS_YEAR.";
 run;
 
 
 title3 'Households with workers in COVID-19 affected industries by potential annual income loss, MWCOG region';
 
-/*** NEED TO TRIM OUTLIERS FROM THIS CHART ***
-proc sgplot data=Covid19.cvd19_affctd_ind_pop;
-  where mwcog_region = 1 and pernum = 1 and incearn_sum > 0 and 0 <= pct_inc_less_cvd19_affctd_sum <= 100;
-  histogram cvd19_affctd_incearn_sum / weight=hhwt;
-  label 
-    cvd19_affctd_incearn_sum = 'Potential lost annual earnings ($ 2018), 2014-18'
-    pct_inc_less_cvd19_affctd_sum = 'Potential lost annual earnings at pct. total household income, 2014-18';
-run;
-****/
-
 proc sgplot data=Covid19.cvd19_affctd_ind_pop;
   where mwcog_region = 1 and pernum = 1 and incearn_sum > 0 and 0 <= pct_inc_less_cvd19_affctd_sum <= 100;
   histogram pct_inc_less_cvd19_affctd_sum / weight=hhwt;
   label 
-    cvd19_affctd_incearn_sum = 'Potential lost annual earnings ($ 2018), 2014-18'
-    pct_inc_less_cvd19_affctd_sum = 'Potential lost annual earnings as pct. total household income, 2014-18';
+    cvd19_affctd_incearn_sum = "Potential lost annual earnings ($ &DOLLAR_YEAR.), &ACS_YEAR."
+    pct_inc_less_cvd19_affctd_sum = "Potential lost annual earnings as pct. total household income, &ACS_YEAR.";
 run;
 
 
