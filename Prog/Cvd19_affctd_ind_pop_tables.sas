@@ -189,8 +189,10 @@ ods listing close;
 
 footnote1 height=9pt "Prepared by Urban-Greater DC (greaterdc.urban.org), &fdate..";
 footnote2 height=9pt j=r '{Page}\~{\field{\*\fldinst{\pard\b\i0\chcbpat8\qc\f1\fs19\cf1{PAGE }\cf0\chcbpat0}}}';
+/*
 footnote3 ' ';
 footnote4 '\b DRAFT - NOT FOR CITATION OR RELEASE';
+*/
 
 title2 ' ';
 
@@ -515,6 +517,50 @@ proc tabulate data=Covid19.cvd19_affctd_ind_pop format=comma16.0 noseps missing;
 run;
 
 
+title3 'Characteristics of workers in COVID-19 affected industries by sex, MWCOG region';
+
+proc tabulate data=Covid19.cvd19_affctd_ind_pop format=comma16.0 noseps missing;
+  where mwcog_region = 1 and cvd19_affctd_ind = 1 and &CVD19_BOT_1PCT_EARNINGS < incearn < &CVD19_TOP_1PCT_EARNINGS;
+  weight perwt;
+  class ind pct_inc_less_cvd19_affctd_sum /order=data preloadfmt;
+  class 
+    statefip upuma age sex race_ethn poverty hud_inc classwkrd fulltime yearround educd 
+    ownershp hsg_cost_ratio 
+    /order=data preloadfmt; 
+  var total inctot incearn cvd19_affctd_incearn;
+  table 
+
+    /** Rows **/
+    all='Total' 
+    statefip='\line \i By state'
+    upuma='\line \i By jurisdiction'
+    age='\line \i By age'
+    race_ethn='\line \i By race/ethnicity'
+    poverty='\line \i By family poverty status (pre-COVID-19)'
+    classwkrd='\line \i By class of worker'
+    fulltime='\line \i By full time worker status'
+    yearround='\line \i By year-round worker status'
+    educd='\line \i By educational attainment'
+    ownershp='\line \i By housing tenure'
+    hsg_cost_ratio='\line \i By housing cost burden (pre-COVID-19)'
+    pct_inc_less_cvd19_affctd_sum='\line \i By share COVID-19 affected earnings'
+    ,
+
+    /** Columns **/
+    sex=' ' * (
+      sum='Workers' * total=' ' * f=comma10.0
+      colpctsum='% workers' * total=' ' * f=comma10.1
+    )
+    
+  ;
+  format ind ind_sum. age age_sum. raced race_sum. hispand hispan_sum. poverty poverty_sum. educd educ_sum.
+         hsg_cost_ratio hsg_cost_ratio. upuma $upuma_to_mwcog_jurisd. race_ethn race_ethn.
+         pct_inc_less_cvd19_affctd_sum pct_inc_split.  
+         fulltime yearround yesnona.;
+run;
+
+
+
 
 **** Household tables ****;
 
@@ -606,8 +652,10 @@ run;
 **** Graphics ****;
 
 footnote2;
+/*
 footnote3 ' ';
 footnote4 'DRAFT - NOT FOR CITATION OR RELEASE';
+*/
 
 title3 'Workers in COVID-19 affected industries by annual earnings, MWCOG region';
 
@@ -632,8 +680,10 @@ run;
 **** Details ****;
 
 footnote2 height=9pt j=r '{Page}\~{\field{\*\fldinst{\pard\b\i0\chcbpat8\qc\f1\fs19\cf1{PAGE }\cf0\chcbpat0}}}';
+/*
 footnote3 ' ';
 footnote4 '\b DRAFT - NOT FOR CITATION OR RELEASE';
+*/
 
 title2 ' ';
 title3 'Workers in COVID-19 affected industries by industry (detailed), MWCOG region';
