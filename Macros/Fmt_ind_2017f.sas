@@ -36,6 +36,8 @@
       0470 = 'Nonmetallic mineral mining and quarrying '
       0480 = 'Not specified type of mining'
       0490 = 'Support activities for mining '
+      
+      0770 = 'Construction'
 
 
 
