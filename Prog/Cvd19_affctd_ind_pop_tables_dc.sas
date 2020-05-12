@@ -100,7 +100,7 @@ proc format;
     0.50 - high = 'Severe cost burden (50%+ income)'
     0.30 -< 0.50 = 'Cost burden (30 - 49%)'
     0 -< 0.30 = 'No cost burden (< 30%)'
-    .n = 'n/a';
+    .n = 'Group quarters or institutional living';
     
   value yesnona (notsorted)
     1 = 'Yes'
@@ -110,7 +110,7 @@ proc format;
   value OWNERSHP_f (notsorted)
     1 = "Owned or being bought (loan)"
     2 = "Rented"
-    0 = "n/a"
+    0 = "Group quarters or institutional living"
   ;
     
   /** HUD Income Categories **/
@@ -120,12 +120,12 @@ proc format;
     3 = 'Low (51-80%)'
     4 = 'Middle (81-120%)'
     5 = 'High (over 120%)'
-    .n = 'n/a';    
+    .n = 'Group quarters or institutional living';    
     
   value hudinc_low (notsorted)
     1-3 = 'At or below low income (0-80% AMI)'
     4-5 = 'Above low income (81% AMI and higher)'
-    .n = 'n/a';    
+    .n = 'Group quarters or institutional living';    
     
   value $upuma_to_mwcog_jurisd (notsorted) 
     "5159301", "5159302", "5159303", "5159304", "5159305", "5159306", "5159307", "5159308", "5159309" = "Fairfax Co., Fairfax city, and Falls Church"
@@ -586,7 +586,7 @@ run;
 title3 'Households with workers in COVID-19 affected industries, District of Columbia';
 
 proc tabulate data=Covid19.cvd19_affctd_ind_pop format=comma16.0 noseps missing;
-  where statefip = 11 and pernum = 1 and incearn_sum > 0;
+  where statefip = 11 and pernum = 1 and cvd19_affctd_incearn_sum > 0 and cvd19_affctd_ind_Sum > 0;
   weight hhwt;
   class statefip;
   class upuma / preloadfmt order=data;
@@ -618,7 +618,7 @@ run;
 title3 'Households with workers in COVID-19 affected industries by potential change in HUD income category, District of Columbia';
 
 proc tabulate data=Covid19.cvd19_affctd_ind_pop format=comma16.0 noseps missing;
-  where statefip = 11 and pernum = 1 and incearn_sum > 0 and not( missing( hud_inc ) );
+  where statefip = 11 and pernum = 1 and cvd19_affctd_incearn_sum > 0 and not( missing( hud_inc ) ) and cvd19_affctd_ind_Sum > 0;
   weight hhwt;
   class statefip hud_inc hud_inc_cvd19;
   var total;
@@ -644,14 +644,15 @@ run;
 title3 'Households with workers in COVID-19 affected industries by potential change in housing cost burden, District of Columbia';
 
 proc tabulate data=Covid19.cvd19_affctd_ind_pop format=comma16.0 noseps missing;
-  where statefip = 11 and pernum = 1 and incearn_sum > 0 and not( missing( hud_inc ) );
+  where statefip = 11 and pernum = 1 and cvd19_affctd_incearn_sum > 0 and not( missing( hud_inc ) ) and cvd19_affctd_ind_Sum > 0;
   weight hhwt;
-  class statefip hsg_cost_ratio hsg_cost_ratio_cvd19 / order=data preloadfmt;
+  class hud_inc hsg_cost_ratio hsg_cost_ratio_cvd19 / order=data preloadfmt;
   var total;
   table 
 
     /** Pages **/
-    all='District of Columbia' /**** statefip=' ' ****/,
+    all='Total' 
+    hud_inc='\line \i By HUD income category (pre-COVID-19)',
 
     /** Rows **/
     all='Total' hsg_cost_ratio=' ',
@@ -688,7 +689,7 @@ run;
 title3 'Households with workers in COVID-19 affected industries by potential annual income loss, District of Columbia';
 
 proc sgplot data=Covid19.cvd19_affctd_ind_pop;
-  where statefip = 11 and pernum = 1 and incearn_sum > 0 and 0 <= pct_inc_less_cvd19_affctd_sum <= 100;
+  where statefip = 11 and pernum = 1 and cvd19_affctd_incearn_sum > 0 and 0 <= pct_inc_less_cvd19_affctd_sum <= 100 and cvd19_affctd_ind_Sum > 0;
   histogram pct_inc_less_cvd19_affctd_sum / weight=hhwt;
   label 
     cvd19_affctd_incearn_sum = "Potential lost annual earnings ($ &DOLLAR_YEAR.), &ACS_YEAR."
@@ -852,23 +853,25 @@ run;
 
 **** Household tables ****;
 
-title3 'Households with workers in COVID-19 affected industries, District of Columbia';
+title3 "Households with workers in COVID-19 affected industries by household income, District of Columbia, &ACS_YEAR.";
 
 proc tabulate data=Covid19.cvd19_affctd_ind_pop format=comma16.0 noseps missing;
-  where statefip = 11 and pernum = 1 and incearn_sum > 0;
+  where statefip = 11 and pernum = 1 and cvd19_affctd_incearn_sum > 0 and cvd19_affctd_ind_Sum > 0 and
+        not( missing( hud_inc ) );
   weight hhwt;
   class statefip;
-  class upuma / preloadfmt order=data;
+  class hud_inc / preloadfmt order=data;
   var total inctot_sum incearn_sum cvd19_affctd_incearn_sum;
   table 
 
     /** Rows **/
-    all='Total' /**** statefip=' ' * ( all=' ' upuma=' ' ) ****/,
+    all='Total'     
+    hud_inc='\line \i By HUD income category (pre-COVID-19)',
 
     /** Columns **/
-    sum='Households' * total=' ' * f=comma12.0
+    sum='Households with COVID-19 affected workers' * total=' ' * f=comma12.0
 
-    sum="Annual household income ($ &DOLLAR_YEAR.), &ACS_YEAR." * 
+    mean="Average annual household income ($ &DOLLAR_YEAR.)" * 
     ( inctot_sum='Total income' 
       incearn_sum='Earnings' 
       cvd19_affctd_incearn_sum='Earnings from COVID-19 affected industries' )

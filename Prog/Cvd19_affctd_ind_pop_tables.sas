@@ -567,7 +567,7 @@ run;
 title3 'Households with workers in COVID-19 affected industries by state and jurisdiction, MWCOG region';
 
 proc tabulate data=Covid19.cvd19_affctd_ind_pop format=comma16.0 noseps missing;
-  where mwcog_region = 1 and pernum = 1 and incearn_sum > 0;
+  where mwcog_region = 1 and pernum = 1 and cvd19_affctd_incearn_sum > 0 and cvd19_affctd_ind_Sum > 0;
   weight hhwt;
   class statefip;
   class upuma / preloadfmt order=data;
@@ -599,7 +599,7 @@ run;
 title3 'Households with workers in COVID-19 affected industries by potential change in HUD income category, MWCOG region';
 
 proc tabulate data=Covid19.cvd19_affctd_ind_pop format=comma16.0 noseps missing;
-  where mwcog_region = 1 and pernum = 1 and incearn_sum > 0 and not( missing( hud_inc ) );
+  where mwcog_region = 1 and pernum = 1 and cvd19_affctd_incearn_sum > 0 and not( missing( hud_inc ) ) and cvd19_affctd_ind_Sum > 0;
   weight hhwt;
   class statefip hud_inc hud_inc_cvd19;
   var total;
@@ -625,7 +625,7 @@ run;
 title3 'Households with workers in COVID-19 affected industries by potential change in housing cost burden, MWCOG region';
 
 proc tabulate data=Covid19.cvd19_affctd_ind_pop format=comma16.0 noseps missing;
-  where mwcog_region = 1 and pernum = 1 and incearn_sum > 0 and not( missing( hud_inc ) );
+  where mwcog_region = 1 and pernum = 1 and cvd19_affctd_incearn_sum > 0 and not( missing( hud_inc ) ) and cvd19_affctd_ind_Sum > 0;
   weight hhwt;
   class statefip hsg_cost_ratio hsg_cost_ratio_cvd19 / order=data preloadfmt;
   var total;
@@ -669,7 +669,7 @@ run;
 title3 'Households with workers in COVID-19 affected industries by potential annual income loss, MWCOG region';
 
 proc sgplot data=Covid19.cvd19_affctd_ind_pop;
-  where mwcog_region = 1 and pernum = 1 and incearn_sum > 0 and 0 <= pct_inc_less_cvd19_affctd_sum <= 100;
+  where mwcog_region = 1 and pernum = 1 and cvd19_affctd_incearn_sum > 0 and 0 <= pct_inc_less_cvd19_affctd_sum <= 100 and cvd19_affctd_ind_Sum > 0;
   histogram pct_inc_less_cvd19_affctd_sum / weight=hhwt;
   label 
     cvd19_affctd_incearn_sum = "Potential lost annual earnings ($ &DOLLAR_YEAR.), &ACS_YEAR."
