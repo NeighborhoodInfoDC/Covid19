@@ -583,7 +583,7 @@ run;
 
 **** Household tables ****;
 
-title3 'Households with workers in COVID-19 affected industries by state and jurisdiction, District of Columbia';
+title3 'Households with workers in COVID-19 affected industries, District of Columbia';
 
 proc tabulate data=Covid19.cvd19_affctd_ind_pop format=comma16.0 noseps missing;
   where statefip = 11 and pernum = 1 and incearn_sum > 0;
@@ -754,7 +754,9 @@ title2;
 footnote1;
 
 
-***** PRESENTATION TABLES *****;
+***********************************************************************************************
+***** PRESENTATION TABLES 
+***********************************************************************************************;
 
 ods rtf file="&_dcdata_default_path\Covid19\Prog\Cvd19_affctd_ind_pop_tables_dc.rtf" style=Styles.Rtf_arial_9pt;
 ods listing close;
@@ -799,6 +801,107 @@ proc tabulate data=Covid19.cvd19_affctd_ind_pop format=comma16.0 noseps missing;
 
   ;
   format ind ind_sum_dc.;
+run;
+
+
+title3 'Characteristics of workers by COVID-19 affected industry status, District of Columbia';
+
+proc tabulate data=Covid19.cvd19_affctd_ind_pop format=comma16.0 noseps missing;
+  where statefip = 11 and &CVD19_BOT_1PCT_EARNINGS < incearn < &CVD19_TOP_1PCT_EARNINGS;
+  weight perwt;
+  class ind cvd19_affctd_ind /order=data preloadfmt;
+  class 
+    statefip upuma age sex race_ethn poverty hud_inc classwkrd fulltime yearround educd 
+    ownershp hsg_cost_ratio
+    /order=data preloadfmt; 
+  var total inctot incearn cvd19_affctd_incearn;
+  table 
+
+    /** Rows **/
+    all='Total' 
+    /****
+    statefip='\line \i By state'
+    upuma='\line \i By jurisdiction'
+    ****/
+    age='\line \i By age'
+    sex='\line \i By sex'
+    race_ethn='\line \i By race/ethnicity'
+    poverty='\line \i By family poverty status (pre-COVID-19)'
+    hud_inc='\line \i By HUD income category (pre-COVID-19)'
+    classwkrd='\line \i By class of worker'
+    fulltime='\line \i By full time worker status'
+    yearround='\line \i By year-round worker status'
+    educd='\line \i By educational attainment'
+    ownershp='\line \i By housing tenure'
+    hsg_cost_ratio='\line \i By housing cost burden (pre-COVID-19)'
+    ,
+
+    /** Columns **/
+    cvd19_affctd_ind=' ' * (
+      /**** n='N (unwtd)' * total=' ' * f=comma8.0 ****/
+      sum='Workers' * total=' ' * f=comma10.0
+      colpctsum='% workers' * total=' ' * f=comma10.1
+    )
+    
+  ;
+  format ind ind_sum. age age_sum. raced race_sum. hispand hispan_sum. poverty poverty_sum. educd educ_sum.
+         hsg_cost_ratio hsg_cost_ratio. upuma $upuma_to_mwcog_jurisd. race_ethn race_ethn.
+         cvd19_affctd_ind cvd19_affctd_ind.  
+         fulltime yearround yesnona.;
+run;
+
+**** Household tables ****;
+
+title3 'Households with workers in COVID-19 affected industries, District of Columbia';
+
+proc tabulate data=Covid19.cvd19_affctd_ind_pop format=comma16.0 noseps missing;
+  where statefip = 11 and pernum = 1 and incearn_sum > 0;
+  weight hhwt;
+  class statefip;
+  class upuma / preloadfmt order=data;
+  var total inctot_sum incearn_sum cvd19_affctd_incearn_sum;
+  table 
+
+    /** Rows **/
+    all='Total' /**** statefip=' ' * ( all=' ' upuma=' ' ) ****/,
+
+    /** Columns **/
+    sum='Households' * total=' ' * f=comma12.0
+
+    sum="Annual household income ($ &DOLLAR_YEAR.), &ACS_YEAR." * 
+    ( inctot_sum='Total income' 
+      incearn_sum='Earnings' 
+      cvd19_affctd_incearn_sum='Earnings from COVID-19 affected industries' )
+
+    pctsum<inctot_sum>='COVID-19 affected earnings as pct. total income' * 
+    cvd19_affctd_incearn_sum=' ' *
+    f=comma12.1
+
+    pctsum<incearn_sum>='COVID-19 affected earnings as pct. total earnings' * 
+    cvd19_affctd_incearn_sum=' ' *
+    f=comma12.1
+  ;
+  format upuma $upuma_to_mwcog_jurisd.;
+run;
+
+title3 'Workers in COVID-19 affected industries by industry (detailed), District of Columbia';
+
+proc tabulate data=Covid19.cvd19_affctd_ind_pop format=comma16.0 noseps missing;
+  where statefip = 11 and cvd19_affctd_ind = 1 and &CVD19_BOT_1PCT_EARNINGS < incearn < &CVD19_TOP_1PCT_EARNINGS;
+  weight perwt;
+  class ind /order=freq;
+  var total inctot incearn cvd19_affctd_incearn fulltime;
+  table 
+
+    /** Rows **/
+    all='Total' ind='\line \i By industry',
+
+    /** Columns **/
+    n='N (unwtd)' * total=' ' * f=comma8.0
+    ( sum='Workers' * f=comma10.0 pctsum='% workers' * f=comma10.1 ) * total=' ' 
+    
+  ;
+  format ind ind_2017f. occ occ_2018f.;
 run;
 
 
