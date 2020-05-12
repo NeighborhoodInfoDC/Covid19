@@ -138,7 +138,7 @@ data Cvd19_affctd_ind_pop;
       else if ownershp = 1 then &var = ( owncost * 12 ) / &inc;
       else if ownershp = 0 then &var = .n;
     end;
-    else do;
+    else if not( missing( &inc ) ) then do;
       if ownershp = 2 and rentgrs > 0 then &var = 1;
       else if ownershp = 1 and owncost > 0 then &var = 1;
       else if ownershp = 0 then &var = .n;
@@ -196,7 +196,7 @@ run;
   outlib=Covid19,
   label="Workers and households in COVID-19-affected industries, ACS, 2014-18, Washington metro (partial)",
   sortby=serial pernum,
-  revisions=%str(New file.),
+  revisions=%str(Corrected hsg_cost_ratio_cvd19 to exclude HHs w/o affected workers.),
   freqvars=mwcog_region cvd19_affctd_ind race_ethn fulltime yearround
 )
 
@@ -250,7 +250,7 @@ run;
 title3 'Households with workers in COVID-19 affected industries by state';
 
 proc tabulate data=Cvd19_affctd_ind_pop format=comma16.0 noseps missing;
-  where pernum = 1;
+  where pernum = 1 and cvd19_affctd_ind_Sum > 0;
   weight hhwt;
   class statefip;
   var total inctot_sum incearn_sum cvd19_affctd_incearn_sum;
