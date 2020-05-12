@@ -48,6 +48,12 @@ proc format;
     8560-8590 = 'Arts & recreation'
     0370-0490 = 'Other COVID-19 affected industries';
     
+  value ind_sum_dc (notsorted)
+    8680, 8690 = 'Food & drink establishments'
+    8560-8590 = 'Arts & recreation'
+    6280, 7670, 8660, 8670 = 'Tourism & travel'
+    6070, 6080, 6090, 6180, 6190, 0370-0490 = 'Transportation & other COVID-19 affected industries';
+    
   value age_sum
     16-20 = '16 - 20 years'
     21-30 = '21 - 30'
@@ -185,7 +191,7 @@ options orientation=portrait;
 
 %fdate()
 
-ods rtf file="&_dcdata_default_path\Covid19\Prog\Cvd19_affctd_ind_pop_tables_dc.rtf" style=Styles.Rtf_arial_9pt;
+ods rtf file="&_dcdata_default_path\Covid19\Prog\Cvd19_affctd_ind_pop_tables_dc_full.rtf" style=Styles.Rtf_arial_9pt;
 ods listing close;
 
 footnote1 height=9pt "Prepared by Urban-Greater DC (greaterdc.urban.org), &fdate..";
@@ -309,8 +315,10 @@ proc tabulate data=Covid19.cvd19_affctd_ind_pop format=comma16.0 noseps missing;
 
     /** Rows **/
     all='Total' 
+    /****
     statefip='\line \i By state'
     upuma='\line \i By jurisdiction'
+    ****/
     age='\line \i By age'
     sex='\line \i By sex'
     race_ethn='\line \i By race/ethnicity'
@@ -355,8 +363,10 @@ proc tabulate data=Covid19.cvd19_affctd_ind_pop format=comma16.0 noseps missing;
 
     /** Rows **/
     all='Total' 
+    /****
     statefip='\line \i By state'
     upuma='\line \i By jurisdiction'
+    ****/
     age='\line \i By age'
     sex='\line \i By sex'
     race_ethn='\line \i By race/ethnicity'
@@ -401,8 +411,10 @@ proc tabulate data=Covid19.cvd19_affctd_ind_pop format=comma16.0 noseps missing;
 
     /** Rows **/
     all='Total' 
+    /****
     statefip='\line \i By state'
     upuma='\line \i By jurisdiction'
+    ****/
     age='\line \i By age'
     sex='\line \i By sex'
     race_ethn='\line \i By race/ethnicity'
@@ -445,8 +457,10 @@ proc tabulate data=Covid19.cvd19_affctd_ind_pop format=comma16.0 noseps missing;
 
     /** Rows **/
     all='Total' 
+    /****
     statefip='\line \i By state'
     upuma='\line \i By jurisdiction'
+    ****/
     age='\line \i By age'
     sex='\line \i By sex'
     race_ethn='\line \i By race/ethnicity'
@@ -490,8 +504,10 @@ proc tabulate data=Covid19.cvd19_affctd_ind_pop format=comma16.0 noseps missing;
 
     /** Rows **/
     all='Total' 
+    /****
     statefip='\line \i By state'
     upuma='\line \i By jurisdiction'
+    ****/
     age='\line \i By age'
     sex='\line \i By sex'
     poverty='\line \i By family poverty status (pre-COVID-19)'
@@ -533,8 +549,10 @@ proc tabulate data=Covid19.cvd19_affctd_ind_pop format=comma16.0 noseps missing;
 
     /** Rows **/
     all='Total' 
+    /****
     statefip='\line \i By state'
     upuma='\line \i By jurisdiction'
+    ****/
     age='\line \i By age'
     race_ethn='\line \i By race/ethnicity'
     poverty='\line \i By family poverty status (pre-COVID-19)'
@@ -576,7 +594,7 @@ proc tabulate data=Covid19.cvd19_affctd_ind_pop format=comma16.0 noseps missing;
   table 
 
     /** Rows **/
-    all='Total' statefip=' ' * ( all=' ' upuma=' ' ),
+    all='Total' /**** statefip=' ' * ( all=' ' upuma=' ' ) ****/,
 
     /** Columns **/
     sum='Households' * total=' ' * f=comma12.0
@@ -607,7 +625,7 @@ proc tabulate data=Covid19.cvd19_affctd_ind_pop format=comma16.0 noseps missing;
   table 
   
     /** Pages **/
-    all='District of Columbia' statefip=' ',
+    all='District of Columbia' /**** statefip=' ' ****/,
 
     /** Rows **/
     all='Total' hud_inc=' ',
@@ -633,7 +651,7 @@ proc tabulate data=Covid19.cvd19_affctd_ind_pop format=comma16.0 noseps missing;
   table 
 
     /** Pages **/
-    all='District of Columbia' statefip=' ',
+    all='District of Columbia' /**** statefip=' ' ****/,
 
     /** Rows **/
     all='Total' hsg_cost_ratio=' ',
@@ -734,3 +752,59 @@ ods listing;
 
 title2;
 footnote1;
+
+
+***** PRESENTATION TABLES *****;
+
+ods rtf file="&_dcdata_default_path\Covid19\Prog\Cvd19_affctd_ind_pop_tables_dc.rtf" style=Styles.Rtf_arial_9pt;
+ods listing close;
+
+footnote1 height=9pt "ACS 5-year microdata (&ACS_YEAR) tabulated by Urban-Greater DC (greaterdc.urban.org), &fdate..";
+footnote2 height=9pt j=r '{Page}\~{\field{\*\fldinst{\pard\b\i0\chcbpat8\qc\f1\fs19\cf1{PAGE }\cf0\chcbpat0}}}';
+
+title1 'Characteristics of Workers and Households in COVID-19 Affected Industries';
+title2 ' ';
+
+
+**** Worker tables ****;
+
+title3 "Workers and earnings in COVID-19 affected industries by industry type, District of Columbia, &ACS_YEAR.";
+
+proc tabulate data=Covid19.cvd19_affctd_ind_pop format=comma16.0 noseps missing;
+  where statefip = 11 and cvd19_affctd_ind = 1 and &CVD19_BOT_1PCT_EARNINGS < incearn < &CVD19_TOP_1PCT_EARNINGS;
+  weight perwt;
+  class ind /order=data preloadfmt;
+  var total inctot incearn cvd19_affctd_incearn fulltime;
+  table 
+
+    /** Rows **/
+    all='Total' ind='\line \i By industry type',
+
+    /** Columns **/
+    /**** n='N (unwtd)' * total=' ' * f=comma8.0 ****/
+    sum='Workers' * total=' ' * f=comma10.0
+    
+    mean='Full time workers' * fulltime=' ' * f=percent10.0
+
+    sum=" " * 
+    ( cvd19_affctd_incearn="Aggregate\~annual earnings from COVID-19 affected industries ($ &DOLLAR_YEAR.)" )
+
+    mean="Annual per capita ($ &DOLLAR_YEAR.)" * 
+    ( inctot='Total income' 
+      cvd19_affctd_incearn='Earnings from COVID-19 affected industries' )
+
+    pctsum<inctot>='COVID-19 affected earnings as pct. total income' * 
+    cvd19_affctd_incearn=' ' *
+    f=comma12.1
+
+  ;
+  format ind ind_sum_dc.;
+run;
+
+
+ods rtf close;
+ods listing;
+
+title2;
+footnote1;
+
