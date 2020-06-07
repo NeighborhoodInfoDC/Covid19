@@ -33,7 +33,8 @@
   educd school schltype
   hud_inc poverty inc: 
   labforce empstatd wkswork2 uhrswork tranwork classwkrd
-  ownershp ownershpd rentgrs owncost gq plumbing hotwater;
+  ownershp ownershpd rentgrs owncost gq plumbing hotwater
+  hhtype;
 
 data A;
 
@@ -78,6 +79,11 @@ data A;
   end;
   else cvd19_affctd_ind = .n;
   
+  /* Life stage flags */
+
+  if age < 18 then child = 1; else child = 0;
+  if age >= 65 then elder = 1; else elder = 0;
+
   cvd19_affctd_incearn = cvd19_affctd_ind * incearn;
   cvd19_affctd_incwage = cvd19_affctd_ind * incwage;
   cvd19_affctd_incbus00 = cvd19_affctd_ind * incbus00;
@@ -101,10 +107,13 @@ run;
 
 proc summary data=A;
   by year serial;
-  var cvd19_affctd_ind inc: cvd19_affctd_inc: ;
+  var cvd19_affctd_ind inc: cvd19_affctd_inc: child elder;
   output out=cvd19_affctd_ind_hh (drop=_type_ _freq_) sum= /autoname;
 run;
 
+proc means data=cvd19_affctd_ind_hh n sum mean min max;
+  var child_sum elder_sum;
+run;
 
 data Cvd19_affctd_ind_pop;
 
@@ -186,6 +195,8 @@ data Cvd19_affctd_ind_pop;
     race_ethn = "Race/ethnicity"
     total = "Total person/household count"
     yearround = "Year round worker (50-52 weeks per year)";
+	child_sum = "Total number of children in HH";
+	elder_sum = "Total number of elders in HH";
 
 run;
 
