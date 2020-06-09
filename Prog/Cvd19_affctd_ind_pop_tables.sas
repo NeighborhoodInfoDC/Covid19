@@ -116,9 +116,7 @@ proc format;
     .n = 'n/a';    
     
   value hudinc_low (notsorted)
-    1 = 'Extremely low income (0-30% AMI)'
-	2 = 'Very low income (31-50% AMI)'
-	3 = 'Low income (51-80% AMI)'
+    1-3 = 'At or below low income (0-80% AMI)'
     4-5 = 'Above low income (81% AMI and higher)'
     .n = 'n/a';    
     
@@ -201,6 +199,189 @@ title2 ' ';
 
 **** Worker tables ****;
 
+title3 'Workers and earnings by COVID-19 affected industry status, MWCOG region';
+
+proc tabulate data=Covid19.cvd19_affctd_ind_pop format=comma16.0 noseps missing;
+  where mwcog_region = 1 and &CVD19_BOT_1PCT_EARNINGS < incearn < &CVD19_TOP_1PCT_EARNINGS;
+  class cvd19_affctd_ind /order=data preloadfmt;
+  var total inctot incearn cvd19_affctd_incearn fulltime;
+  table 
+
+    /** Rows **/
+    all='Total' cvd19_affctd_ind=' ',
+
+    /** Columns **/
+    n='N (unwtd)' * total=' ' * f=comma8.0
+    sum='Workers' * total=' ' * f=comma10.0
+    
+    mean='Full time workers' * fulltime=' ' * f=percent10.0
+
+    sum="Annual income ($ &DOLLAR_YEAR.), &ACS_YEAR." * 
+    ( inctot='Total income' 
+      incearn='Total earnings'
+      cvd19_affctd_incearn='Earnings from COVID-19 affected industries' )
+
+    pctsum<inctot>='COVID-19 affected earnings as pct. total income' * 
+    cvd19_affctd_incearn=' ' *
+    f=comma12.1
+
+    pctsum<incearn>='COVID-19 affected earnings as pct. total earnings' * 
+    cvd19_affctd_incearn=' ' *
+    f=comma12.1
+  ;
+  table 
+
+    /** Rows **/
+    all='Total' cvd19_affctd_ind=' ',
+
+    /** Columns **/
+    n='N (unwtd)' * total=' ' * f=comma8.0
+    sum='Workers' * total=' ' * f=comma10.0
+    
+    mean='Full time workers' * fulltime=' ' * f=percent10.0
+
+    mean="Annual income per capita ($ &DOLLAR_YEAR.), &ACS_YEAR." * 
+    ( inctot='Total income' 
+      incearn='Total earnings'
+      cvd19_affctd_incearn='Earnings from COVID-19 affected industries' )
+
+    pctsum<inctot>='COVID-19 affected earnings as pct. total income' * 
+    cvd19_affctd_incearn=' ' *
+    f=comma12.1
+
+    pctsum<incearn>='COVID-19 affected earnings as pct. total earnings' * 
+    cvd19_affctd_incearn=' ' *
+    f=comma12.1
+  ;
+  format cvd19_affctd_ind cvd19_affctd_ind.;
+run;
+
+
+title3 'Workers and earnings in COVID-19 affected industries by industry type, MWCOG region';
+
+proc tabulate data=Covid19.cvd19_affctd_ind_pop format=comma16.0 noseps missing;
+  where mwcog_region = 1 and cvd19_affctd_ind = 1 and &CVD19_BOT_1PCT_EARNINGS < incearn < &CVD19_TOP_1PCT_EARNINGS;
+  weight perwt;
+  class ind /order=data preloadfmt;
+  var total inctot incearn cvd19_affctd_incearn fulltime;
+  table 
+
+    /** Rows **/
+    all='Total' ind='\line \i By industry type',
+
+    /** Columns **/
+    n='N (unwtd)' * total=' ' * f=comma8.0
+    sum='Workers' * total=' ' * f=comma10.0
+    
+    mean='Full time workers' * fulltime=' ' * f=percent10.0
+
+    sum="Annual income ($ &DOLLAR_YEAR.), &ACS_YEAR." * 
+    ( inctot='Total income' 
+      cvd19_affctd_incearn='Earnings from COVID-19 affected industries' )
+
+    mean="Annual income per capita ($ &DOLLAR_YEAR.), &ACS_YEAR." * 
+    ( inctot='Total income' 
+      cvd19_affctd_incearn='Earnings from COVID-19 affected industries' )
+
+    pctsum<inctot>='COVID-19 affected earnings as pct. total income' * 
+    cvd19_affctd_incearn=' ' *
+    f=comma12.1
+
+  ;
+  format ind ind_sum.;
+run;
+
+
+title3 'Characteristics of workers in COVID-19 affected industries with annual earnings, MWCOG region';
+
+proc tabulate data=Covid19.cvd19_affctd_ind_pop format=comma16.0 noseps missing;
+  where mwcog_region = 1 and cvd19_affctd_ind = 1 and &CVD19_BOT_1PCT_EARNINGS < incearn < &CVD19_TOP_1PCT_EARNINGS;
+  weight perwt;
+  class ind /order=data preloadfmt;
+  class 
+    statefip upuma age sex race_ethn poverty hud_inc classwkrd fulltime yearround educd 
+    ownershp hsg_cost_ratio
+    /order=data preloadfmt; 
+  var total inctot incearn cvd19_affctd_incearn;
+  table 
+
+    /** Rows **/
+    all='Total' 
+    statefip='\line \i By state'
+    upuma='\line \i By jurisdiction'
+    age='\line \i By age'
+    sex='\line \i By sex'
+    race_ethn='\line \i By race/ethnicity'
+    poverty='\line \i By family poverty status (pre-COVID-19)'
+    hud_inc='\line \i By HUD income category (pre-COVID-19)'
+    classwkrd='\line \i By class of worker'
+    fulltime='\line \i By full time worker status'
+    yearround='\line \i By year-round worker status'
+    educd='\line \i By educational attainment'
+    ownershp='\line \i By housing tenure'
+    hsg_cost_ratio='\line \i By housing cost burden (pre-COVID-19)'
+    ,
+
+    /** Columns **/
+    n='N (unwtd)' * total=' ' * f=comma8.0
+    sum='Workers' * total=' ' * f=comma10.0
+    pctsum='% workers' * total=' ' * f=comma10.1
+    
+    mean="Annual income per capita ($ &DOLLAR_YEAR.), &ACS_YEAR." * 
+    ( inctot='Total income' 
+      cvd19_affctd_incearn='Earnings from COVID-19 affected industries' )
+
+  ;
+  format ind ind_sum. age age_sum. raced race_sum. hispand hispan_sum. poverty poverty_sum. educd educ_sum.
+         hsg_cost_ratio hsg_cost_ratio. upuma $upuma_to_mwcog_jurisd. race_ethn race_ethn.
+         fulltime yearround yesnona.;
+run;
+
+
+title3 'Characteristics of workers by COVID-19 affected industry status, MWCOG region';
+
+proc tabulate data=Covid19.cvd19_affctd_ind_pop format=comma16.0 noseps missing;
+  where mwcog_region = 1 and &CVD19_BOT_1PCT_EARNINGS < incearn < &CVD19_TOP_1PCT_EARNINGS;
+  weight perwt;
+  class ind cvd19_affctd_ind /order=data preloadfmt;
+  class 
+    statefip upuma age sex race_ethn poverty hud_inc classwkrd fulltime yearround educd 
+    ownershp hsg_cost_ratio
+    /order=data preloadfmt; 
+  var total inctot incearn cvd19_affctd_incearn;
+  table 
+
+    /** Rows **/
+    all='Total' 
+    statefip='\line \i By state'
+    upuma='\line \i By jurisdiction'
+    age='\line \i By age'
+    sex='\line \i By sex'
+    race_ethn='\line \i By race/ethnicity'
+    poverty='\line \i By family poverty status (pre-COVID-19)'
+    hud_inc='\line \i By HUD income category (pre-COVID-19)'
+    classwkrd='\line \i By class of worker'
+    fulltime='\line \i By full time worker status'
+    yearround='\line \i By year-round worker status'
+    educd='\line \i By educational attainment'
+    ownershp='\line \i By housing tenure'
+    hsg_cost_ratio='\line \i By housing cost burden (pre-COVID-19)'
+    ,
+
+    /** Columns **/
+    cvd19_affctd_ind=' ' * (
+      n='N (unwtd)' * total=' ' * f=comma8.0
+      sum='Workers' * total=' ' * f=comma10.0
+      colpctsum='% workers' * total=' ' * f=comma10.1
+    )
+    
+  ;
+  format ind ind_sum. age age_sum. raced race_sum. hispand hispan_sum. poverty poverty_sum. educd educ_sum.
+         hsg_cost_ratio hsg_cost_ratio. upuma $upuma_to_mwcog_jurisd. race_ethn race_ethn.
+         cvd19_affctd_ind cvd19_affctd_ind.  
+         fulltime yearround yesnona.;
+run;
+
 
 title3 'Characteristics of workers in COVID-19 affected industries by HUD household income category, MWCOG region';
 
@@ -211,16 +392,25 @@ proc tabulate data=Covid19.cvd19_affctd_ind_pop format=comma16.0 noseps missing;
   class ind /order=data preloadfmt;
   class 
     statefip upuma age sex race_ethn poverty hud_inc classwkrd fulltime yearround educd 
-    ownershp hsg_cost_ratio numprec
+    ownershp hsg_cost_ratio
     /order=data preloadfmt; 
   var total inctot incearn cvd19_affctd_incearn;
   table 
 
-	/** Sheets **/
-    upuma,
     /** Rows **/
     all='Total' 
-	numprec='\line \i By household size'
+    statefip='\line \i By state'
+    upuma='\line \i By jurisdiction'
+    age='\line \i By age'
+    sex='\line \i By sex'
+    race_ethn='\line \i By race/ethnicity'
+    poverty='\line \i By family poverty status (pre-COVID-19)'
+    classwkrd='\line \i By class of worker'
+    fulltime='\line \i By full time worker status'
+    yearround='\line \i By year-round worker status'
+    educd='\line \i By educational attainment'
+    ownershp='\line \i By housing tenure'
+    hsg_cost_ratio='\line \i By housing cost burden (pre-COVID-19)'
     ,
 
     /** Columns **/
@@ -233,8 +423,142 @@ proc tabulate data=Covid19.cvd19_affctd_ind_pop format=comma16.0 noseps missing;
   ;
   format ind ind_sum. age age_sum. raced race_sum. hispand hispan_sum. poverty poverty_sum. educd educ_sum.
          hsg_cost_ratio hsg_cost_ratio. upuma $upuma_to_mwcog_jurisd. race_ethn race_ethn.
-         hud_inc hudinc_low. fulltime yearround yesnona.;
+         hud_inc hudinc_low.  
+         fulltime yearround yesnona.;
 run;
+
+
+title3 'Characteristics of workers in COVID-19 affected industries by affected earnings share of household income, MWCOG region';
+
+proc tabulate data=Covid19.cvd19_affctd_ind_pop format=comma16.0 noseps missing;
+  where mwcog_region = 1 and cvd19_affctd_ind = 1 and &CVD19_BOT_1PCT_EARNINGS < incearn < &CVD19_TOP_1PCT_EARNINGS;
+  weight perwt;
+  class ind pct_inc_less_cvd19_affctd_sum /order=data preloadfmt;
+  class 
+    statefip upuma age sex race_ethn poverty hud_inc classwkrd fulltime yearround educd 
+    ownershp hsg_cost_ratio
+    /order=data preloadfmt; 
+  var total inctot incearn cvd19_affctd_incearn;
+  table 
+
+    /** Rows **/
+    all='Total' 
+    statefip='\line \i By state'
+    upuma='\line \i By jurisdiction'
+    age='\line \i By age'
+    sex='\line \i By sex'
+    race_ethn='\line \i By race/ethnicity'
+    poverty='\line \i By family poverty status (pre-COVID-19)'
+    classwkrd='\line \i By class of worker'
+    fulltime='\line \i By full time worker status'
+    yearround='\line \i By year-round worker status'
+    educd='\line \i By educational attainment'
+    ownershp='\line \i By housing tenure'
+    hsg_cost_ratio='\line \i By housing cost burden (pre-COVID-19)'
+    ,
+
+    /** Columns **/
+    pct_inc_less_cvd19_affctd_sum=' ' * (
+      n='N (unwtd)' * total=' ' * f=comma8.0
+      sum='Workers' * total=' ' * f=comma10.0
+      colpctsum='% workers' * total=' ' * f=comma10.1
+    )
+    
+  ;
+  format ind ind_sum. age age_sum. raced race_sum. hispand hispan_sum. poverty poverty_sum. educd educ_sum.
+         hsg_cost_ratio hsg_cost_ratio. upuma $upuma_to_mwcog_jurisd. race_ethn race_ethn.
+         pct_inc_less_cvd19_affctd_sum pct_inc_split.  
+         fulltime yearround yesnona.;
+run;
+
+
+title3 'Characteristics of workers in COVID-19 affected industries by race/ethnicity, MWCOG region';
+
+proc tabulate data=Covid19.cvd19_affctd_ind_pop format=comma16.0 noseps missing;
+  where mwcog_region = 1 and cvd19_affctd_ind = 1 and &CVD19_BOT_1PCT_EARNINGS < incearn < &CVD19_TOP_1PCT_EARNINGS
+        and 1 <= race_ethn <= 4;
+  weight perwt;
+  class ind pct_inc_less_cvd19_affctd_sum /order=data preloadfmt;
+  class 
+    statefip upuma age sex race_ethn poverty hud_inc classwkrd fulltime yearround educd 
+    ownershp hsg_cost_ratio 
+    /order=data preloadfmt; 
+  var total inctot incearn cvd19_affctd_incearn;
+  table 
+
+    /** Rows **/
+    all='Total' 
+    statefip='\line \i By state'
+    upuma='\line \i By jurisdiction'
+    age='\line \i By age'
+    sex='\line \i By sex'
+    poverty='\line \i By family poverty status (pre-COVID-19)'
+    classwkrd='\line \i By class of worker'
+    fulltime='\line \i By full time worker status'
+    yearround='\line \i By year-round worker status'
+    educd='\line \i By educational attainment'
+    ownershp='\line \i By housing tenure'
+    hsg_cost_ratio='\line \i By housing cost burden (pre-COVID-19)'
+    pct_inc_less_cvd19_affctd_sum='\line \i By share COVID-19 affected earnings'
+    ,
+
+    /** Columns **/
+    race_ethn=' ' * (
+      sum='Workers' * total=' ' * f=comma10.0
+      colpctsum='% workers' * total=' ' * f=comma10.1
+    )
+    
+  ;
+  format ind ind_sum. age age_sum. raced race_sum. hispand hispan_sum. poverty poverty_sum. educd educ_sum.
+         hsg_cost_ratio hsg_cost_ratio. upuma $upuma_to_mwcog_jurisd. race_ethn race_ethn.
+         pct_inc_less_cvd19_affctd_sum pct_inc_split.  
+         fulltime yearround yesnona.;
+run;
+
+
+title3 'Characteristics of workers in COVID-19 affected industries by sex, MWCOG region';
+
+proc tabulate data=Covid19.cvd19_affctd_ind_pop format=comma16.0 noseps missing;
+  where mwcog_region = 1 and cvd19_affctd_ind = 1 and &CVD19_BOT_1PCT_EARNINGS < incearn < &CVD19_TOP_1PCT_EARNINGS;
+  weight perwt;
+  class ind pct_inc_less_cvd19_affctd_sum /order=data preloadfmt;
+  class 
+    statefip upuma age sex race_ethn poverty hud_inc classwkrd fulltime yearround educd 
+    ownershp hsg_cost_ratio 
+    /order=data preloadfmt; 
+  var total inctot incearn cvd19_affctd_incearn;
+  table 
+
+    /** Rows **/
+    all='Total' 
+    statefip='\line \i By state'
+    upuma='\line \i By jurisdiction'
+    age='\line \i By age'
+    race_ethn='\line \i By race/ethnicity'
+    poverty='\line \i By family poverty status (pre-COVID-19)'
+    classwkrd='\line \i By class of worker'
+    fulltime='\line \i By full time worker status'
+    yearround='\line \i By year-round worker status'
+    educd='\line \i By educational attainment'
+    ownershp='\line \i By housing tenure'
+    hsg_cost_ratio='\line \i By housing cost burden (pre-COVID-19)'
+    pct_inc_less_cvd19_affctd_sum='\line \i By share COVID-19 affected earnings'
+    ,
+
+    /** Columns **/
+    sex=' ' * (
+      sum='Workers' * total=' ' * f=comma10.0
+      colpctsum='% workers' * total=' ' * f=comma10.1
+    )
+    
+  ;
+  format ind ind_sum. age age_sum. raced race_sum. hispand hispan_sum. poverty poverty_sum. educd educ_sum.
+         hsg_cost_ratio hsg_cost_ratio. upuma $upuma_to_mwcog_jurisd. race_ethn race_ethn.
+         pct_inc_less_cvd19_affctd_sum pct_inc_split.  
+         fulltime yearround yesnona.;
+run;
+
+
 
 
 **** Household tables ****;
