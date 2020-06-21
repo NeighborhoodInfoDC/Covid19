@@ -203,6 +203,7 @@ title3 'Workers and earnings by COVID-19 affected industry status, MWCOG region'
 
 proc tabulate data=Covid19.cvd19_affctd_ind_pop format=comma16.0 noseps missing;
   where mwcog_region = 1 and &CVD19_BOT_1PCT_EARNINGS < incearn < &CVD19_TOP_1PCT_EARNINGS;
+  weight perwt;
   class cvd19_affctd_ind /order=data preloadfmt;
   var total inctot incearn cvd19_affctd_incearn fulltime;
   table 

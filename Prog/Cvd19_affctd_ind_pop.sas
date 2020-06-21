@@ -148,7 +148,7 @@ data Cvd19_affctd_ind_pop;
 		if hhtype in (0, 9) then famtype = 0;
 		else if hhtype in (2,3,4,5,6,7) and child_sum > 0 then famtype = 3;
 		else if hhtype in (2,3,4,5,6,7) and child_sum = 0 then famtype = 4;
-		else famtype = 5;
+		*else famtype = 5;
 		end;
 
   ** Housing cost ratio **;
@@ -438,7 +438,21 @@ proc format;
     40 <- high = 'Above 40% household income'
     0 - 40 = 'At or below 40% household income'
     other = 'n/a';
+
+  value hh_size (notsorted)
+    1 = '1 person HH'
+	2 = '2 person HH'
+	3 = '3 person HH'
+	4 = '4 person HH'
+	5 = '5 person HH'
+	6-high = '6+ person HH';
     
+  value family_type (notsorted)
+     0 = 'Not applicable/Undetermined'
+	 1 = 'Married family with children'
+	 2 = 'Married family without children'
+	 3 = 'Single family with children'
+	 4 = 'Single family without children';
 run;  
 
 ** Examine earnings for outliers **;
@@ -492,7 +506,7 @@ title3 'Characteristics of workers in COVID-19 affected industries by HUD househ
 
 proc tabulate data=cvd19_affctd_ind_pop format=comma16.0 noseps missing;
   where mwcog_region = 1 and cvd19_affctd_ind = 1
-        and hud_inc >= 1;
+        and 1 <= hud_inc <= 3;
   weight perwt;
   class ind /order=data preloadfmt;
   class 
@@ -503,11 +517,11 @@ proc tabulate data=cvd19_affctd_ind_pop format=comma16.0 noseps missing;
   table 
 
 	/** Sheets **/
-    upuma,
+    upuma = '',
     /** Rows **/
     all='Total' 
 	numprec='\line \i By household size'
-	hhtype='\line \i By household type'
+	famtype='\line \i By household type'
     ,
 
     /** Columns **/

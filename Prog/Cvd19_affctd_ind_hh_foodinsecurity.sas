@@ -115,12 +115,6 @@ proc format;
     5 = 'High (over 120%)'
     .n = 'n/a';    
     
-  value hudinc_low (notsorted)
-    1 = 'Extremely low income (0-30% AMI)'
-	2 = 'Very low income (31-50% AMI)'
-	3 = 'Low income (51-80% AMI)'
-    4-5 = 'Above low income (81% AMI and higher)'
-    .n = 'n/a';    
     
   value $upuma_to_mwcog_jurisd (notsorted) 
     "5159301", "5159302", "5159303", "5159304", "5159305", "5159306", "5159307", "5159308", "5159309" = "Fairfax Co., Fairfax city, and Falls Church"
@@ -149,6 +143,14 @@ proc format;
 	 2 = 'Married family without children'
 	 3 = 'Single family with children'
 	 4 = 'Single family without children';
+
+  value hh_size (notsorted)
+    1 = '1 person HH'
+	2 = '2 person HH'
+	3 = '3 person HH'
+	4 = '4 person HH'
+	5 = '5 person HH'
+	6-high = '6+ person HH';
     
   value cvd19_affctd_ind (notsorted) 
     1 = 'In COVID-19 affected industry'
@@ -211,9 +213,9 @@ title2 ' ';
 
 title3 'Characteristics of workers in COVID-19 affected industries by HUD household income category, MWCOG region';
 
-proc tabulate data=COVID19.cvd19_affctd_ind_pop format=comma16.0 noseps missing;
+proc tabulate data=Covid19.cvd19_affctd_ind_pop format=comma16.0 noseps missing;
   where mwcog_region = 1 and cvd19_affctd_ind = 1 and &CVD19_BOT_1PCT_EARNINGS < incearn < &CVD19_TOP_1PCT_EARNINGS
-        and hud_inc >= 1;
+        and 1 <= hud_inc <= 3;
   weight perwt;
   class ind /order=data preloadfmt;
   class 
@@ -224,7 +226,7 @@ proc tabulate data=COVID19.cvd19_affctd_ind_pop format=comma16.0 noseps missing;
   table 
 
 	/** Sheets **/
-    upuma,
+    upuma =' ',
     /** Rows **/
     all='Total' 
 	numprec='\line \i By household size'
@@ -241,7 +243,7 @@ proc tabulate data=COVID19.cvd19_affctd_ind_pop format=comma16.0 noseps missing;
   ;
   format ind ind_sum. age age_sum. raced race_sum. hispand hispan_sum. poverty poverty_sum. educd educ_sum.
          hsg_cost_ratio hsg_cost_ratio. upuma $upuma_to_mwcog_jurisd. race_ethn race_ethn.
-         hud_inc hudinc_low. fulltime yearround yesnona. famtype family_type.;
+         hud_inc hudinc_low. fulltime yearround yesnona. famtype family_type. numprec hh_size.;
 run;
 
 
@@ -249,7 +251,7 @@ run;
 
 title3 'Characteristics of Households with affected workers, MWCOG region';
 
-proc tabulate data=COVID19.cvd19_affctd_ind_pop format=comma16.0 noseps missing;
+proc tabulate data=Covid19.cvd19_affctd_ind_pop format=comma16.0 noseps missing;
   where mwcog_region = 1 and pernum = 1 and cvd19_affctd_incearn_sum > 0 and cvd19_affctd_ind_Sum > 0;
   weight hhwt;
   class statefip hud_inc famtype;
