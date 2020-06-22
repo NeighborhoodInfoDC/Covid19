@@ -148,7 +148,6 @@ data Cvd19_affctd_ind_pop;
 		if hhtype in (0, 9) then famtype = 0;
 		else if hhtype in (2,3,4,5,6,7) and child_sum > 0 then famtype = 3;
 		else if hhtype in (2,3,4,5,6,7) and child_sum = 0 then famtype = 4;
-		*else famtype = 5;
 		end;
 
   ** Housing cost ratio **;

@@ -243,7 +243,7 @@ proc tabulate data=Covid19.cvd19_affctd_ind_pop format=comma16.0 noseps missing;
   ;
   format ind ind_sum. age age_sum. raced race_sum. hispand hispan_sum. poverty poverty_sum. educd educ_sum.
          hsg_cost_ratio hsg_cost_ratio. upuma $upuma_to_mwcog_jurisd. race_ethn race_ethn.
-         hud_inc hudinc_low. fulltime yearround yesnona. famtype family_type. numprec hh_size.;
+         hud_inc hudinc. fulltime yearround yesnona. famtype family_type. numprec hh_size.;
 run;
 
 
@@ -258,24 +258,18 @@ proc tabulate data=Covid19.cvd19_affctd_ind_pop format=comma16.0 noseps missing;
   class upuma / preloadfmt order=data;
   var total inctot_sum incearn_sum cvd19_affctd_incearn_sum numprec child_sum elder_sum numprec;
   table 
-
-  	upuma,
+    
+    /** Sheets **/
+    upuma = ' ',
     /** Rows **/
-   /* all='Total'*/ 
 	famtype='\line \i By family type'
     ,
 
 
     /** Columns **/
-    numprec='\line \i Total number of people in affected HH' * (
-      n='N (unwtd)'
-      sum='Workers')
-    child_sum='\line \i Number of children in affected HH' * (
-      n='N (unwtd)'
-      sum='Workers')
-	elder_sum='\line \i Number of elders in affected HH' * (
-      n='N (unwtd)'
-      sum='Workers')
+	sum="People"*numprec
+	sum="Children"*child_sum
+	sum="Elders"*elder_sum
     ;
 
     format ind ind_sum. age age_sum. raced race_sum. hispand hispan_sum. poverty poverty_sum. educd educ_sum.
