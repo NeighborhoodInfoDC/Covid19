@@ -195,7 +195,7 @@ options orientation=portrait;
 
 %fdate()
 
-ods rtf file="&_dcdata_default_path\Covid19\Prog\vd19_affctd_ind_hh_foodinsecurity_tables.rtf" /*style=Styles.Rtf_arial_9pt*/;
+ods rtf file="&_dcdata_default_path\Covid19\Prog\vd19_affctd_ind_hh_foodinsecurity_tables.rtf" style=Styles.Rtf_arial_9pt;
 ods listing close;
 
 footnote1 height=9pt "Prepared by Urban-Greater DC (greaterdc.urban.org), &fdate..";
