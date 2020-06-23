@@ -510,7 +510,7 @@ proc tabulate data=cvd19_affctd_ind_pop format=comma16.0 noseps missing;
   class ind /order=data preloadfmt;
   class 
     statefip upuma age sex race_ethn poverty hud_inc classwkrd fulltime yearround educd 
-    ownershp hsg_cost_ratio numprec hhtype
+    ownershp hsg_cost_ratio numprec hhtype famtype
     /order=data preloadfmt; 
   var total inctot incearn cvd19_affctd_incearn;
   table 
